@@ -33,6 +33,7 @@ namespace AreaMiner
         private IRadius totalRadius;
 
         private ILocation target;
+        private IDigAction digAction;
         private bool moving;
         private bool equiped;
         private bool mining;
@@ -206,7 +207,22 @@ namespace AreaMiner
             //Hook start events.
             player.physicsEngine.onPhysicsPreTick += PhysicsEngine_onPhysicsPreTick;
             player.events.onDisconnected += Events_onDisconnected;
+            player.events.onBlockChanged += Events_onBlockChanged;
             return new PluginResponse(true);
+        }
+
+        private void Events_onBlockChanged(IPlayer player, ILocation location, ushort oldId, ushort newId)
+        {
+            if (this.target != null && location.Compare(this.target)) {
+                //Insta completed:
+                //Reset states.
+                this.mining = false;
+                this.equiped = false;
+                this.target = null;
+
+                // Cancel dig.
+                this.digAction?.Cancel(player);
+            }
         }
 
         private void PhysicsEngine_onPhysicsPreTick(IPlayer player) {
@@ -313,10 +329,10 @@ namespace AreaMiner
             this.mining = true;
 
             //Attempt to mine the target.
-            var result = player.functions.BlockDig(this.target, MiningResult);
+            digAction = player.functions.BlockDig(this.target, MiningResult);
 
             //Check for insta cancelled.
-            if (result.cancelled || !result.valid) {
+            if (digAction.cancelled || !digAction.valid) {
 
                 //Insta completed:
                 //Reset states.
@@ -336,6 +352,7 @@ namespace AreaMiner
             if (digAction.cancelled || digAction.completed || !digAction.valid) {
 
                 //Reset states.
+                this.digAction = null;
                 this.mining = false;
                 this.equiped = false;
                 this.target = null;
@@ -408,7 +425,8 @@ namespace AreaMiner
                             if (broken.ContainsKey(tempLocation) &&
                                 broken[tempLocation].Subtract(DateTime.Now).TotalSeconds < -15)
                                 continue;
-                            if(ignoreIds?.Contains(player.world.GetBlockId(x, y, z)) == true) continue;
+                            if(ignoreIds?.Contains(player.world.GetBlockId(x, y, z)) == true)
+                                continue;
 
                             if (closest == null) {
                                 distance = tempLocation.Distance(player.status.entity.location.ToLocation(0));
