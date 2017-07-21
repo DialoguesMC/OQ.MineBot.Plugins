@@ -226,13 +226,16 @@ namespace CropFarmerPlugin
             Events_onInventoryUpdate(player, false, false);
             if (storing) return;
 
+            Console.WriteLine(player.world.GetBlockId(5479, 64, -180));
+            Console.WriteLine(player.world.GetBlockMetadata(5479, 64, -180));
 
             //Check if there is a block that has grown.
             ILocation nextMove = null;
             double distance = int.MaxValue;
             for (int i = 0; i < growBlocks.Length; i++) {
                 var block = player.world.GetBlock(growBlocks[i].x, (int) growBlocks[i].y, growBlocks[i].z);
-                if (Farmable.Contains((ushort) (block >> 4)) && (block & 15) >= 7) {
+                if (Farmable.Contains((ushort) (block >> 4)) && (block & 15) >= 7 ||
+                    (Farmable[3] == (ushort)(block >> 4) && (block & 15) >= 3)) { // Beetroot
                     //Create the location.
                     var loc = growBlocks[i];
 
