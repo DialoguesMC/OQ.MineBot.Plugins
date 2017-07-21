@@ -22,8 +22,8 @@ namespace CropFarmerPlugin
     public class PluginCore : IStartPlugin
     {
         public static int[] Food = { 364, 412, 320, 424, 366, 393, 297 };
-        public static ushort[] Farmable = { 59, 141, 142 };
-        public static int[] Plantable = { 295, 391, 392 };
+        public static ushort[] Farmable = { 59, 141, 142, 207 };
+        public static int[] Plantable = { 295, 391, 392, 435 };
 
         /// <summary>
         /// How accurate pathing should be.
