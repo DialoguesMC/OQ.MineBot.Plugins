@@ -226,9 +226,6 @@ namespace CropFarmerPlugin
             Events_onInventoryUpdate(player, false, false);
             if (storing) return;
 
-            Console.WriteLine(player.world.GetBlockId(5479, 64, -180));
-            Console.WriteLine(player.world.GetBlockMetadata(5479, 64, -180));
-
             //Check if there is a block that has grown.
             ILocation nextMove = null;
             double distance = int.MaxValue;
