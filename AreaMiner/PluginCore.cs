@@ -536,13 +536,13 @@ public class ShareManager
         if (_Total.xSize > _Total.zSize) {
             x = (int)Math.Ceiling((double)_Total.xSize/(double)count);
             l = _Total.xSize;
-            z = _Total.zSize;
+            z = _Total.zSize + 1;
             for (int i = 0; i < zones.Length; i++)
                 zones[i].Value.UpdateHorizontal(new Location(_Total.start.x + x*i, 0, _Total.start.z),
                     new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - _Total.xSize / count : 0), 0, _Total.start.z + z));
         }
         else {
-            x = _Total.xSize;
+            x = _Total.xSize + 1;
             z = (int)Math.Ceiling((double)_Total.zSize/(double)count);
             l = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
