@@ -539,7 +539,7 @@ public class ShareManager
             z = _Total.zSize + 1;
             for (int i = 0; i < zones.Length; i++)
                 zones[i].Value.UpdateHorizontal(new Location(_Total.start.x + x*i, 0, _Total.start.z),
-                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - _Total.xSize / count : 0), 0, _Total.start.z + z));
+                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - (x*i)-1 : 0), 0, _Total.start.z + z));
         }
         else {
             x = _Total.xSize + 1;
@@ -547,7 +547,7 @@ public class ShareManager
             l = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
                 zones[i].Value.UpdateHorizontal(new Location(_Total.start.x, 0, _Total.start.z + z*i),
-                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l- _Total.zSize / count:0)));
+                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l - (z*i) -1:0)));
         }
     }
 }
