@@ -180,7 +180,7 @@ namespace AutoFishPlugin
             if (DateTime.Now.Subtract(castTime).TotalSeconds < CAST_TIME)
                 return;
 
-            if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD[Setting[2].Get<int>()]) return;
+            if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD[Setting[1].Get<int>()]) return;
 
             // Reel in, we got a fish probably.
             Recast();
