@@ -168,6 +168,20 @@ namespace AutoEatPlugin
                     lastEat = DateTime.Now;
                     return; //We started eating, don't search for other food.
                 }
+
+                //Check if we should search for soups.
+                if (Setting[3].Get<bool>()) {
+                    if (player.status.containers.inventory.Select(HealingSoup)) {
+                        //Wait for the server to notice the call.
+                        Thread.Sleep(50);
+                        //Don't start the eating process, just right click
+                        //the soup item as they are processes instantly
+                        //by the server.
+                        player.functions.UseSelectedItem();
+                        lastEat = DateTime.Now;
+                        return; //We started eating, don't search for other food.
+                    }
+                }
             }
 
             //Health is fine, check if we need to eat normal food.
