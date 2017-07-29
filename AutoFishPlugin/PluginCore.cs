@@ -127,7 +127,7 @@ namespace AutoFishPlugin
         }
 
         private const double MOTION_Y_TRESHOLD = -0.02;
-        private const int CAST_TIME = 3; // How many seconds should we wait before we can reel back in. (seconds) 
+        private const int CAST_TIME = 6; // How many seconds should we wait before we can reel back in. (seconds) 
         private const int MAX_WAIT_TIME = 60; // How long can we wait before reeling in (and retrying). (seconds) 
 
         private const int ROD_ID = 346;
