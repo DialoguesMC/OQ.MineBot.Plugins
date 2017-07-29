@@ -60,6 +60,7 @@ namespace AutoFishPlugin
         /// </summary>
         public IPluginSetting[] Setting { get; set; } = {
             new BoolSetting("Keep rotation", "Should the bot not change it's head rotation?", false),
+            new ComboSetting("Sensitivity", null, new string[] { "High", "Medium", "Low"}, 1),
         };
 
         /// <summary>
@@ -126,7 +127,13 @@ namespace AutoFishPlugin
             set { if (value == false) lureObject = null; }
         }
 
-        private const double MOTION_Y_TRESHOLD = -0.02;
+        private static readonly double[] MOTION_Y_TRESHOLD =
+        {
+            -0.02,
+            -0.035,
+            -0.05,
+        };
+        
         private const int CAST_TIME = 6; // How many seconds should we wait before we can reel back in. (seconds) 
         private const int MAX_WAIT_TIME = 60; // How long can we wait before reeling in (and retrying). (seconds) 
 
@@ -173,7 +180,7 @@ namespace AutoFishPlugin
             if (DateTime.Now.Subtract(castTime).TotalSeconds < CAST_TIME)
                 return;
 
-            if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD) return;
+            if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD[Setting[2].Get<int>()]) return;
 
             // Reel in, we got a fish probably.
             Recast();
