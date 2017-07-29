@@ -413,7 +413,7 @@ namespace AreaMiner
             //(As that is easier to manager)
             ILocation closest = null;
             double distance = int.MaxValue;
-            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y - playerRadius.height; y--)
+            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y; y--)
                 if(closest == null)
                     for (int x = playerRadius.start.x; x < playerRadius.start.x + playerRadius.xSize; x++)
                         for (int z = playerRadius.start.z; z < playerRadius.start.z + playerRadius.zSize; z++) {
@@ -531,31 +531,23 @@ public class ShareManager
         // Count the workers.
         var count = zones.Length;
 
-        // Create new zones for choosing here.
-        IRadius[] zoneList = new IRadius[zones.Length];
-
         int x, z;
         int l;
         if (_Total.xSize > _Total.zSize) {
-            x = _Total.xSize/count;
+            x = (int)Math.Ceiling((double)_Total.xSize/(double)count);
             l = _Total.xSize;
             z = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
-                zoneList[i] = new IRadius(new Location(_Total.start.x + x*i, _Total.start.y, _Total.start.z),
-                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - _Total.xSize / count : 0), _Total.start.y - _Total.height, _Total.start.z + z));
+                zones[i].Value.UpdateHorizontal(new Location(_Total.start.x + x*i, 0, _Total.start.z),
+                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - _Total.xSize / count : 0), 0, _Total.start.z + z));
         }
         else {
             x = _Total.xSize;
-            z = _Total.zSize/count;
+            z = (int)Math.Ceiling((double)_Total.zSize/(double)count);
             l = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
-                zoneList[i] = new IRadius(new Location(_Total.start.x, _Total.start.y, _Total.start.z + z*i),
-                    new Location(_Total.start.x + x, _Total.start.y + _Total.height, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l- _Total.zSize / count:0)));
+                zones[i].Value.UpdateHorizontal(new Location(_Total.start.x, 0, _Total.start.z + z*i),
+                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l- _Total.zSize / count:0)));
         }
-
-        for (int i = 0; i < zoneList.Length; i++)
-            zones[i].Value.UpdateHorizontal(zoneList[i].start,
-                new Location(zoneList[i].start.x + zoneList[i].xSize + 1, zoneList[i].start.y + zoneList[i].height,
-                    zoneList[i].start.z + 1 +zoneList[i].zSize));
     }
 }
