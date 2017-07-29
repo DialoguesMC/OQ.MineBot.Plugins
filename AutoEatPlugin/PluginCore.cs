@@ -61,6 +61,7 @@ namespace AutoEatPlugin
             new NumberSetting("Eat when hunger is below X", "When should the bot eat normal food (-1 if it shouldn't eat them).", -1, -1, 19, 14),
             new NumberSetting("Eat gapples when below X hp", "When should the bot eat golden apples (-1 if it shouldn't eat them).", -1, -1, 20, 1),
             new ComboSetting("Mode", null, new string[] { "Efficient", "Accurate" }, 0),
+            new BoolSetting("Soup", "Can the bot use soup for healing?", false),
         };
         
         /// <summary>
