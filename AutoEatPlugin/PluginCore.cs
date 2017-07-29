@@ -17,9 +17,9 @@ namespace AutoEatPlugin
 {
     public class PluginCore : IStartPlugin
     {
-        public static int[] HealingFood = {322};
-        public static int[] HealingSoup = { 282 };
-        public static int[] Food = { 260, 297, 319, 320, 350, 357, 360, 364, 366, 391, 393, 400 };
+        public static ushort[] HealingFood = {322};
+        public static ushort[] HealingSoup = { 282 };
+        public static ushort[] Food = { 260, 297, 319, 320, 350, 357, 360, 364, 366, 391, 393, 400 };
 
         /// <summary>
         /// Name of the plugin.
