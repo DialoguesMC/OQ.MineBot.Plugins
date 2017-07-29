@@ -413,7 +413,7 @@ namespace AreaMiner
             //(As that is easier to manager)
             ILocation closest = null;
             double distance = int.MaxValue;
-            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y; y--)
+            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y + 1; y--)
                 if(closest == null)
                     for (int x = playerRadius.start.x; x < playerRadius.start.x + playerRadius.xSize; x++)
                         for (int z = playerRadius.start.z; z < playerRadius.start.z + playerRadius.zSize; z++) {
