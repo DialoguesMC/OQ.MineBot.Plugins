@@ -61,6 +61,7 @@ namespace AutoFishPlugin
         public IPluginSetting[] Setting { get; set; } = {
             new BoolSetting("Keep rotation", "Should the bot not change it's head rotation?", false),
             new ComboSetting("Sensitivity", null, new string[] { "High", "Medium", "Low"}, 1),
+            new ComboSetting("Reaction speed", null, new string[] { "Fast", "Medium", "Slow"}, 1),
         };
 
         /// <summary>
@@ -133,6 +134,12 @@ namespace AutoFishPlugin
             -0.035,
             -0.05,
         };
+        private static readonly int[] REACTION_SPEEDS =
+        {
+            0,
+            -5,
+            -10,
+        };
         
         private const int CAST_TIME = 6; // How many seconds should we wait before we can reel back in. (seconds) 
         private const int MAX_WAIT_TIME = 60; // How long can we wait before reeling in (and retrying). (seconds) 
@@ -143,7 +150,8 @@ namespace AutoFishPlugin
         private bool castTick = false;
         private bool lookTick = true;
         private int tick = 0;
-
+        private bool reelTick = false;
+        
         /// <summary>
         /// Called once a "player" logs
         /// in to the server.
@@ -183,6 +191,7 @@ namespace AutoFishPlugin
             if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD[Setting[1].Get<int>()]) return;
 
             // Reel in, we got a fish probably.
+            this.reelTick = true;
             Recast();
         }
 
@@ -225,13 +234,21 @@ namespace AutoFishPlugin
 
             // Check if we should cast this tick.
             if (this.castTick) {
-
-                player.functions.UseSelectedItem(); // Right click the rod.
-                this.castTime = DateTime.Now;
-                this.maxWaitTime = DateTime.Now.AddSeconds(MAX_WAIT_TIME);
-                this.fishing = true;
-                this.castTick = false;
-                this.tick = -20;
+                if (this.reelTick) {
+                    player.functions.UseSelectedItem(); // Right click the rod.
+                    this.reelTick = false;
+                    this.tick = -10;
+                    ResetState();
+                    Recast();
+                }
+                else {
+                    player.functions.UseSelectedItem(); // Right click the rod.
+                    this.castTime = DateTime.Now;
+                    this.maxWaitTime = DateTime.Now.AddSeconds(MAX_WAIT_TIME);
+                    this.fishing = true;
+                    this.castTick = false;
+                    this.tick = -20;
+                }
                 return;
             }
 
@@ -298,10 +315,10 @@ namespace AutoFishPlugin
             this.lureSpawned = false;
         }
         private void Recast() {
-            player.functions.UseSelectedItem(); // Right click the rod.
+            //player.functions.UseSelectedItem(); // Right click the rod.
             this.castTick = true;
-            ResetState();
-            tick = -10;
+            //ResetState();
+            tick = REACTION_SPEEDS[this.Setting[2].Get<int>()];
         }
 
         private void LookAtWater() {
