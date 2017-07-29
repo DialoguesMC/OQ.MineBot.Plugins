@@ -51,7 +51,7 @@ namespace AutoFishPlugin
         /// <returns></returns>
         public string GetVersion()
         {
-            return "1.00.00";
+            return "1.01.00";
         }
 
         /// <summary>
