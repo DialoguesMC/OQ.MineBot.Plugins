@@ -150,7 +150,23 @@ namespace AutoEatPlugin
                 player.events.onTick -= OnTick;
                 return;
             }
+            ProcessFoodCheck(player);
+        }
 
+        private DateTime lastEat = DateTime.MinValue;
+        private void OnHealthUpdate(IPlayer player, float health, int food, float foodSaturation) {
+
+            //Check if we should un-hook, in case the
+            //plugin is stopped.
+            if (stopToken.stopped) {
+                player.events.onHealthUpdate -= OnHealthUpdate;
+                return;
+            }
+            ProcessFoodCheck(player);
+        }
+
+        private void ProcessFoodCheck(IPlayer player) {
+            
             //Check if already eating.
             if (player.status.eating || DateTime.Now.Subtract(lastEat).TotalSeconds < 4) return;
 
@@ -171,7 +187,7 @@ namespace AutoEatPlugin
 
                 //Check if we should search for soups.
                 if (Setting[3].Get<bool>()) {
-                    if (player.status.containers.inventory.Select(HealingSoup)) {
+                    if (player.status.containers.inventory.Select(HealingSoup) != -1) {
                         //Wait for the server to notice the call.
                         Thread.Sleep(50);
                         //Don't start the eating process, just right click
@@ -197,74 +213,6 @@ namespace AutoEatPlugin
                     player.functions.EatAsync();
                     lastEat = DateTime.Now;
                     return; //We started eating, don't search for other food.
-                }
-            }
-        }
-
-        private DateTime lastEat = DateTime.MinValue;
-        private void OnHealthUpdate(IPlayer player, float health, int food, float foodSaturation) {
-
-            //Check if we should un-hook, in case the
-            //plugin is stopped.
-            if (stopToken.stopped) {
-                player.events.onHealthUpdate -= OnHealthUpdate;
-                return;
-            }
-
-            //Check if already eating.
-            if (player.status.eating || DateTime.Now.Subtract(lastEat).TotalSeconds < 4) return;
-            lastEat = DateTime.Now;
-            
-            //Check if our health is below the requirement to eat.
-            if (Setting[1].Get<int>() != -1 && Setting[1].Get<int>() >= health) {
-
-                //We should each, as the requirement is reached.
-
-                //Check if we should get out apples to our hotbar.
-                if (player.status.containers.inventory.hotbar.FindId(HealingFood) == -1) { //We should find it in inventory.
-                    //Find the slot.
-                    var slot = player.status.containers.inventory.inner.FindId(HealingFood);
-                    if (slot != -1) {
-                        player.status.containers.inventory.hotbar.BringToHotbar(8, slot, null); //Slot 8 for healing food.
-                    }
-                }
-
-                //Check if we have any food in the hotbar.
-                var healingSlot = player.status.containers.inventory.hotbar.FindId(HealingFood);
-                //Check if found any healing food.
-                if (healingSlot != -1) {
-                    //Select the item in hotbar.
-                    player.functions.SetHotbarSlot((short)(healingSlot-36));
-                    //Wait for the server to notice the call.
-                    Thread.Sleep(50);
-                    //Start eating.
-                    player.functions.EatAsync();
-                    return; //We started eating, don't search for other food.
-                }   
-            }
-
-            //Health is fine, check if we need to eat normal food.
-            if (Setting[0].Get<int>() != -1 && Setting[0].Get<int>() >= food) {
-
-                //We should eat, check if we have food.
-                if (player.status.containers.inventory.hotbar.FindId(Food) == -1) { //We should find it in inventory.
-                    //Find the slot.
-                    var slot = player.status.containers.inventory.inner.FindId(Food);
-                    if (slot != -1) {
-                        player.status.containers.inventory.hotbar.BringToHotbar(7, slot, null); //Slot 7 for normal food.
-                    }
-                }
-
-                //Check if we have any food in the hotbar.
-                var foodSlot = player.status.containers.inventory.hotbar.FindId(Food);
-                //Check if found any healing food.
-                if (foodSlot != -1) {
-                    //Select the item in hotbar.
-                    player.functions.SetHotbarSlot((short)(foodSlot-36));
-                    //Wait for the server to notice the call.
-                    Thread.Sleep(50);
-                    //Start eating.
-                    player.functions.EatAsync();
                 }
             }
         }
