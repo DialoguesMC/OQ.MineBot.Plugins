@@ -216,7 +216,7 @@ namespace SugarcaneFarmerPlugin
 
             //Check if we need to reload blocks.
             if (reload)
-                if (player.world.chunks?.Length >= 1) {
+                if (player.world.chunks?.Count >= 1) {
 
                     //Check if other clients are currently checking 
                     //if so then we should wait till that task is done.
