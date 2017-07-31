@@ -214,7 +214,7 @@ namespace CropFarmerPlugin
             if (passedTicks < 2 || moving || storing) return; //Do not overrflow.
             //Check if we need to reload blocks.
             if (reload) {
-                if (player.world.chunks?.Length >= 1) {
+                if (player.world.chunks?.Count >= 1) {
                     GetBlocks(player);
                     reload = false;
                 }
