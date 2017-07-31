@@ -71,6 +71,7 @@ namespace SandPrinterPlugin
             new StringSetting("End x y z", "", "0 0 0"),
             new ComboSetting("Mode", null, new string[] { "Fast", "Accurate" }, 1),
             new BoolSetting("Sand walking", "Can the bot walk on sand (might cause it falling off with multiple bots)", false),
+            new BoolSetting("No movement", "Should the bot place all the sand from the spot it is in?", false),
         };
 
         /// <summary>
