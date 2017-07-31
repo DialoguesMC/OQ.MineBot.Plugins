@@ -346,6 +346,25 @@ namespace SandPrinterPlugin
 
             return null;
         }
+
+        private ILocation FindTargetClosest() {
+
+            List<ILocation> locations = new List<ILocation>();
+            //Search from top to bottom.
+            //(As that is easier to manager)
+            for (int y = (int)totalRadius.start.y + totalRadius.height; y >= (int)totalRadius.start.y - totalRadius.height; y--)
+                for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize; x++)
+                    for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
+                    {
+                        //Check if the block is valid for mining.
+                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0)
+                            continue;
+
+                        locations.Add(new Location(x, y,z));
+                    }
+
+            return locations.OrderBy(x => x.Distance(player.status.entity.location.ToLocation(-1))).FirstOrDefault();
+        }
         private ILocation[] FindSurroundingTargets() {
 
             List<ILocation> list = new List<ILocation>();
