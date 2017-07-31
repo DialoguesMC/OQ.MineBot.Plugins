@@ -24,6 +24,7 @@ namespace SandPrinterPlugin
         private MapOptions PathOptions = new MapOptions() { Look = false, Quality = SearchQuality.LOW, AntiStuck = false };
         private const float REACH = 4;
         private static ushort[] UNWALKABLE = new[] {(ushort) 12};
+        private const float MAX_RANGE = 5;
 
         /// <summary>
         /// Name of the plugin.
@@ -265,9 +266,12 @@ namespace SandPrinterPlugin
             }
 
             //Find the target.
-            this.target = FindTarget();
-            if(this.target == null) return;
-            Taken.TryAdd(this.target, player);
+            if (Setting[4].Get<bool>()) this.target = FindTarget();
+            else this.target = FindTargetClosest();
+
+            if (this.target == null) return;
+            if (!Setting[4].Get<bool>()) //Don't add if we are not moving.
+                Taken.TryAdd(this.target, player);
             
             //Get a neighbouring block.
             neighbour = player.functions.FindValidNeighbour(this.target, false);
@@ -286,7 +290,7 @@ namespace SandPrinterPlugin
             //we have enough ticks passed to 
             //register the change.
             SelectSand();
-
+            
             //Update each tick, in case the user
             //updates the setting runtime.
             if (!Setting[3].Get<bool>()) PathOptions.Unwalkable = UNWALKABLE;
@@ -296,6 +300,13 @@ namespace SandPrinterPlugin
             //plus a bit over it so we can place blocks on it's side.
             var map = player.functions.AsyncMoveToLocation(neighbour.location, stopToken, PathOptions); // Make it move over the block a litte bit.
             map.Offset = CalculateOffset(target, neighbour.location);
+
+            //Check if we should not move
+            //and just start placing sand.
+            if (Setting[4].Get<bool>()) {
+                moving = false;
+                OnPathReached(map.Offset);
+            }
 
             //Hook the callbacks.
             map.Completed += areaMap => OnPathReached(map.Offset);
@@ -357,7 +368,7 @@ namespace SandPrinterPlugin
                     for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
                     {
                         //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0)
+                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0 || player.status.entity.location.Distance(new Position(x+0.5f,y,z+0.5f)) > MAX_RANGE)
                             continue;
 
                         locations.Add(new Location(x, y,z));
