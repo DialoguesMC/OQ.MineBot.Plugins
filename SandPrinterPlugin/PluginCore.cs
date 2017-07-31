@@ -306,6 +306,7 @@ namespace SandPrinterPlugin
             if (Setting[4].Get<bool>()) {
                 moving = false;
                 OnPathReached(map.Offset);
+                return;
             }
 
             //Hook the callbacks.
