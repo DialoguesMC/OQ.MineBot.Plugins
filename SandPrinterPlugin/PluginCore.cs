@@ -261,7 +261,24 @@ namespace SandPrinterPlugin
                 if (IsRowDone()) {
                     this.ClearTarget();
                     this.inProgress = false;
+
+                        //// Calculat the position that isn't on the sand anymore.
+                        //var offsand = new Location((int)Math.Ceiling(this.player.status.entity.location.X-0.5),
+                        //                           (int)this.player.status.entity.location.Y,
+                        //                           (int)Math.Ceiling(this.player.status.entity.location.Z - 0.5));
+
+                        //var tempmap = player.functions.AsyncMoveToLocation(offsand, stopToken, PathOptions); // Make it move over the block a litte bit.
+                        //moving = true;
+
+                        ////Hook the callbacks.
+                        //tempmap.Completed += areaMap => { this.moving = false; this.ClearTarget(); };
+                        //tempmap.Cancelled += (areaMap, cuboid) => { this.moving=false; this.ClearTarget(); };
+
+                        //// Go forward, to not be
+                        //// standing on the sand.
+                        //tempmap.Start();
                 }
+
                 return;
             }
 
@@ -350,7 +367,7 @@ namespace SandPrinterPlugin
                     for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
                     {
                         //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0)
+                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0 || player.status.entity.location.Distance(new Position(x + 0.5f, y, z + 0.5f)) > MAX_RANGE)
                             continue;
 
                         return new Location(x, y, z);
@@ -369,7 +386,7 @@ namespace SandPrinterPlugin
                     for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
                     {
                         //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0 || player.status.entity.location.Distance(new Position(x+0.5f,y,z+0.5f)) > MAX_RANGE)
+                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0)
                             continue;
 
                         locations.Add(new Location(x, y,z));
