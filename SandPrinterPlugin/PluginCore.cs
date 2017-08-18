@@ -455,7 +455,7 @@ namespace SandPrinterPlugin
             this.inProgress = false;
             this.moving = false;
             this.passTick = true;
-            this.target = null;
+            ClearTarget(); // Clear target, as other bots might be able to walk to it.
             return;
         }
 
