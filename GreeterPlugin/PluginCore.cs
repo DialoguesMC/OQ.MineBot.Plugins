@@ -136,8 +136,11 @@ namespace GreeterPlugin
 
         private void EntitiesOnOnNameAdded(UUID uuid) {
 
-            if (start.Subtract(DateTime.Now).TotalSeconds < -10) return;
-
+            //Do not trigger in the first 10 seconds
+            //as we are still joining the server.
+            //(all player names will be sent ar first)
+            if (start.Subtract(DateTime.Now).TotalSeconds > -10) return;
+            
             //Check if we should stop the plugin.
             if (stopToken.stopped || uuid.Name.Contains('§') || string.IsNullOrWhiteSpace(uuid.Name)) return;
             if (rnd.Next(0, 101) > Setting[2].Get<int>()) return;
