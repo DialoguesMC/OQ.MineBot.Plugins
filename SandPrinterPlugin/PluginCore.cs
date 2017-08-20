@@ -289,9 +289,14 @@ namespace SandPrinterPlugin
             if (this.target == null) return;
             if (!Setting[4].Get<bool>()) //Don't add if we are not moving.
                 Taken.TryAdd(this.target, player);
-            
+
+            //Update each tick, in case the user
+            //updates the setting runtime.
+            if (!Setting[3].Get<bool>()) PathOptions.Unwalkable = UNWALKABLE;
+            else PathOptions.Unwalkable = null;
+
             //Get a neighbouring block.
-            neighbour = player.functions.FindValidNeighbour(this.target, false);
+            neighbour = player.functions.FindValidNeighbour(this.target, false, PathOptions.Unwalkable);
             if (neighbour == null) {
                 
                 ClearTarget();
@@ -307,11 +312,6 @@ namespace SandPrinterPlugin
             //we have enough ticks passed to 
             //register the change.
             SelectSand();
-            
-            //Update each tick, in case the user
-            //updates the setting runtime.
-            if (!Setting[3].Get<bool>()) PathOptions.Unwalkable = UNWALKABLE;
-            else PathOptions.Unwalkable = null;
 
             //Attempt to path to the location of the neighbour 
             //plus a bit over it so we can place blocks on it's side.
