@@ -99,11 +99,7 @@ namespace ShieldPlugin
         /// UUID info of the owner.
         /// </summary>
         public UUID ownerUuid;
-        /// <summary>
-        /// Unadded names to the friendly list.
-        /// </summary>
-        public List<string> friendlyUnadded = new List<string>(); 
-
+        
         /// <summary>
         /// Called once the plugin is loaded.
         /// (Params are the version of the program)
@@ -148,6 +144,7 @@ namespace ShieldPlugin
         public IPlugin Copy() {
             return (IStartPlugin)MemberwiseClone();
         }
+        public ResolvableNameCollection Names;
 
         /// <summary>
         /// Called once a "player" logs
@@ -178,26 +175,7 @@ namespace ShieldPlugin
             }
             
             //Add friendlies.
-            if (!string.IsNullOrWhiteSpace(Setting[3].Get<string>())) {
-                
-                //Check if multiple.
-                if (Setting[3].Get<string>().Contains(' ')) {
-                    //Multiples.
-                    foreach (var uuid in Setting[3].Get<string>().Split(' ')) {
-                        if (uuid.Length == 32 || uuid.Length == 36)
-                            Targeter.IgnoreList.Add(uuid.Replace("-", ""));
-                        else
-                            friendlyUnadded.Add(uuid);
-                    }
-                }
-                else {
-
-                    if(Setting[3].Get<string>().Length == 32 || Setting[3].Get<string>().Length == 36)
-                        Targeter.IgnoreList.Add(Setting[3].Get<string>().Replace("-", ""));
-                    else
-                        friendlyUnadded.Add(Setting[3].Get<string>());
-                }
-            }
+            this.Names = new ResolvableNameCollection(Setting[3].Get<string>());
 
             //Hook start events.
             player.physicsEngine.onPhysicsPreTick += PhysicsEngine_onPhysicsPreTick;
@@ -277,18 +255,8 @@ namespace ShieldPlugin
             }
 
             //Add unadded friendlies.
-            for (int i = friendlyUnadded.Count - 1; i >= 0; i--) {
-
-                var uuid = player.entities.FindUuidByName(friendlyUnadded[i]);
-                if (uuid != null) {
-
-                    //Add to friendlies.
-                    Targeter.IgnoreList.Add(uuid.Uuid);
-                    //Found name, remove it.
-                    friendlyUnadded.RemoveAt(i);
-                }
-
-            }
+            if(Names.HasUnresolved())
+                Names.Resolve(player.entities);
 
             //Attempt to attack targets.
             var entity = Attack(player);
@@ -421,6 +389,73 @@ namespace ShieldPlugin
                 }
             }
             return closestPlayer;
+        }
+    }
+
+    public class ResolvableNameCollection
+    {
+        public List<ResolvableName> Names = new List<ResolvableName>();
+        private int m_unresolved = 0;
+
+        public ResolvableNameCollection(string friendlyNames) {
+            
+            if (!string.IsNullOrWhiteSpace(friendlyNames)) {
+
+                string[] friendlyArray;
+                    
+                //Check if multiple.
+                if (friendlyNames.Contains(' ')) friendlyArray = friendlyNames.Split(' ');
+                else friendlyArray = new []{friendlyNames};
+
+                for(int i = 0; i < friendlyArray.Length; i++)
+                    if (friendlyArray[i].Length == 32 || friendlyArray[i].Length == 36)
+                        Add(new ResolvableName(friendlyArray[i].Replace("-", "")));
+                    else
+                        Add(new ResolvableName(friendlyArray[i], false));
+            }
+        }
+
+        public void Add(ResolvableName Name) {
+            this.Names.Add(Name);
+            if (!Name.Resolved)
+                m_unresolved += 1;
+            else Targeter.IgnoreList.Add(Name.Uuid);
+        }
+
+        public bool HasUnresolved() {
+            return m_unresolved > 0;
+        }
+
+        public void Resolve(IEntityList entities) {
+            for(int i = 0; i < Names.Count; i++)
+                if (!Names[i].Resolved) {
+                    if (Names[i].Resolve(entities))
+                        this.m_unresolved -= 1;
+                }
+        }
+    }
+
+    public class ResolvableName
+    {
+        public string Name;
+        public string Uuid;
+        public bool Resolved;
+
+        public ResolvableName(string Name, bool Resolved) {
+            this.Name = Name;
+            this.Resolved = Resolved;
+        }
+        public ResolvableName(string Uuid) {
+            this.Uuid = Uuid;
+            this.Resolved = true;
+        }
+
+        public bool Resolve(IEntityList entities) {
+            this.Uuid = entities.FindUuidByName(Name)?.Uuid;
+            this.Resolved = this.Uuid != null;
+            if (this.Resolved)
+                Targeter.IgnoreList.Add(this.Uuid);
+            return this.Resolved;
         }
     }
 }
