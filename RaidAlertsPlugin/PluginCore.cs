@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -67,6 +68,12 @@ namespace RaidAlertsPlugin
             new StringSetting("Friendly uuid(s)", "Uuids split by space.", ""),
             new StringSetting("Lamp coordinates", "Coordinates in the [X Y Z] format, split by a space", "[-1 -1 -1] [0 0 0] [1 1 1]"),
             new LinkSetting("Add bot", "Adds the bot to your discord channel (you must have administrator permissions).", "https://discordapp.com/oauth2/authorize?client_id=299708378236583939&scope=bot&permissions=6144"),
+
+            new StringSetting("Player message", "Message sent to discord when a player is detected.", "[MEDIUM] Player(%name%) has been detected."),
+            new StringSetting("Explosion message", "Message sent to discord when an explosion is detected.", "[HIGH] Explosion occured at %location%"),
+            new StringSetting("Lamp message", "Message sent to discord when a lamp is deactivated.", "[HIGH] Lamp at %location% has been deactivated!"),
+            new StringSetting("Wither message", "Message sent to discord when a wither is detected.", "[HIGH] A wither has been detected!"),
+            new StringSetting("Creeper message", "Message sent to discord when a creeper is detected.", "[MEDIUM] A creeper has been detected."),
         };
 
         /// <summary>
@@ -183,7 +190,7 @@ namespace RaidAlertsPlugin
                 //Notify the user as the this block is a disabled lamp
                 //and is tracked.
                 NotifyUser(
-                    "[HIGH] Lamp at " + location.x + "/" + location.y + "/" + location.z + " has been deactivated!", 10,
+                    ApplyVariables(Setting[11].Get<string>(), player.status.entity.location.ToLocation(0), location, ""), 10,
                     4);
             }
         }
@@ -209,7 +216,7 @@ namespace RaidAlertsPlugin
                 var friendly = friendlyFixed.Split(' ');
                 if (!friendly.Contains(playerEntity.uuid)) {
                     var name = player.entities.FindNameByUuid(playerEntity.uuid);
-                    NotifyUser("[MEDIUM] Player(" + name.Name + ") has been detected.", 4, 3);
+                    NotifyUser(ApplyVariables(Setting[9].Get<string>(), player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
                 }
             }
             else {
@@ -217,9 +224,9 @@ namespace RaidAlertsPlugin
                 if (mobEntity == null) return;
 
                 if(mobEntity.type == MobType.Wither && Setting[3].Get<bool>())
-                    NotifyUser("[HIGH] A wither has been detected!", 10, 2);
+                    NotifyUser(ApplyVariables(Setting[12].Get<string>(), player.status.entity.location.ToLocation(0), mobEntity.location.ToLocation(0), "Wither"), 10, 2);
                 else if(mobEntity.type == MobType.Creeper && Setting[4].Get<bool>())
-                    NotifyUser("[MEDIUM] A creeper has been detected.", 4, 1);
+                    NotifyUser(ApplyVariables(Setting[13].Get<string>(), player.status.entity.location.ToLocation(0), mobEntity.location.ToLocation(0), "Creeper"), 4, 1);
             }
         }
 
@@ -235,7 +242,7 @@ namespace RaidAlertsPlugin
             }
 
             if (Setting[2].Get<bool>())
-                NotifyUser("[HIGH] Explosion occured at " + X + "/" + Y + "/" + Z, 10, 0);
+                NotifyUser(ApplyVariables(Setting[10].Get<string>(), player.status.entity.location.ToLocation(0), new Location((int)Math.Round(X), Y, (int)Math.Round(Z)), ""), 10, 0);
         }
 
         private void NotifyUser(string message, int priority, int id) {
@@ -258,6 +265,16 @@ namespace RaidAlertsPlugin
         /// Each id has a limit according to 
         /// it's priority.
         /// </summary>
-        private static ConcurrentDictionary<int, DateTime> IdLimits = new ConcurrentDictionary<int, DateTime>(); 
+        private static ConcurrentDictionary<int, DateTime> IdLimits = new ConcurrentDictionary<int, DateTime>();
+
+        private static string ApplyVariables(string text, ILocation playerLocation, ILocation targetLocation, string name) {
+            if (text.Contains("%name%"))
+                text = text.Replace("%name%", name);
+            if (text.Contains("%location%"))
+                text = text.Replace("%location%", targetLocation.ToString());
+            if (text.Contains("%distance%"))
+                text = text.Replace("%distance%", Math.Round(playerLocation.Distance(targetLocation)).ToString(CultureInfo.CurrentCulture));
+            return text;
+        }
     }
 }
