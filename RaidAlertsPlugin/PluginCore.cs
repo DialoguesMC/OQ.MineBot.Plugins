@@ -51,7 +51,7 @@ namespace RaidAlertsPlugin
         /// </summary>
         /// <returns></returns>
         public string GetVersion() {
-            return "1.02.00";
+            return "1.03.00";
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace RaidAlertsPlugin
         /// (NULL if there shouldn't be any settings)
         /// </summary>
         public IPluginSetting[] Setting { get; set; } = {
-            new StringSetting("Discord name (E.g.: OnlyQubes#8234)", "OR Server name and the channel name split by @ (E.g.: OQ.Support@general).", ""),
+            new StringSetting("Discord name (E.g.: OnlyQubes#8234)", "OR Server name and the channel name split by > (E.g.: OQ.Support>general).", ""),
             new BoolSetting("Local notifications", "", true),
             new BoolSetting("Explosion notifications", "", true),
             new BoolSetting("Wither notifications", "", true),
