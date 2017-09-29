@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -116,8 +117,16 @@ namespace TextSpammerPlugin
             
             player.events.onTick += OnTick;
 
+            // Attempt to get the messages.
+            if(string.IsNullOrWhiteSpace(Setting[0].Get<string>()) || !File.Exists(Setting[0].Get<string>()))
+                return new PluginResponse(false, "Invalid text file selected.");
+            Messages = File.ReadAllLines(Setting[0].Get<string>());
+
             return new PluginResponse(true);
         }
+
+        private DateTime NextMessage = DateTime.Now;
+        private string[] Messages;
 
         private void OnTick(IPlayer player) {
             //Check if we should un-hook, in case the
