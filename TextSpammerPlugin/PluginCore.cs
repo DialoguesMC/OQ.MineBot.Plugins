@@ -144,8 +144,8 @@ namespace TextSpammerPlugin
                 // Schedule next message.
                 NextMessage =
                     DateTime.Now.AddMilliseconds(Setting[2].Get<int>() == -1 // Check if Max delay is disabled.
-                        ? Setting[2].Get<int>() // Max delay disabled, use min delay.
-                        : rnd.Next(Setting[1].Get<int>(), Setting[2].Get<int>()));
+                        ? Setting[1].Get<int>() // Max delay disabled, use min delay.
+                        : rnd.Next(Math.Min(Setting[1].Get<int>(), Setting[2].Get<int>()), Math.Max(Setting[1].Get<int>(), Setting[2].Get<int>())));
 
                 // Post chat message.
                 player.functions.Chat(Messages[rnd.Next(0, Messages.Length)] + // Pick random message.
