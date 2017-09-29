@@ -50,8 +50,12 @@ namespace TextSpammerPlugin
         /// (NULL if there shouldn't be any settings)
         /// </summary>
         public IPluginSetting[] Setting { get; set; } =
-            {
-            };
+        {
+            new StringSetting("Text file path", "Picks lines from the selected file to spam.", ""),
+            new NumberSetting("Min delay", "", 0, 1000, 60*60*60),
+            new NumberSetting("Max delay", "", -1, -1, 60*60*60),
+            new BoolSetting("Anti-spam", "Should random numbers be added at the end?", false),
+        };
 
         /// <summary>
         /// Called once the plugin is loaded.
