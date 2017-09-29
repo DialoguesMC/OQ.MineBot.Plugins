@@ -54,7 +54,7 @@ namespace TextSpammerPlugin
         {
             new StringSetting("Text file path", "Picks lines from the selected file to spam.", ""),
             new NumberSetting("Min delay", "", 0, 1000, 60*60*60),
-            new NumberSetting("Max delay", "", -1, -1, 60*60*60),
+            new NumberSetting("Max delay", "(-1 to always use 'Min delay')", -1, -1, 60*60*60),
             new BoolSetting("Anti-spam", "Should random numbers be added at the end?", false),
         };
 
@@ -121,10 +121,13 @@ namespace TextSpammerPlugin
             if(string.IsNullOrWhiteSpace(Setting[0].Get<string>()) || !File.Exists(Setting[0].Get<string>()))
                 return new PluginResponse(false, "Invalid text file selected.");
             Messages = File.ReadAllLines(Setting[0].Get<string>());
+            if(Messages.Length == 0)
+                return new PluginResponse(false, "Invalid text file selected.");
 
             return new PluginResponse(true);
         }
 
+        private static Random rnd = new Random();
         private DateTime NextMessage = DateTime.Now;
         private string[] Messages;
 
@@ -135,7 +138,19 @@ namespace TextSpammerPlugin
                 player.events.onTick -= OnTick;
                 return;
             }
-            
+
+            if (DateTime.Now.Subtract(NextMessage).TotalMilliseconds > 0) {
+
+                // Schedule next message.
+                NextMessage =
+                    DateTime.Now.AddMilliseconds(Setting[2].Get<int>() == -1 // Check if Max delay is disabled.
+                        ? Setting[2].Get<int>() // Max delay disabled, use min delay.
+                        : rnd.Next(Setting[1].Get<int>(), Setting[2].Get<int>()));
+
+                // Post chat message.
+                player.functions.Chat(Messages[rnd.Next(0, Messages.Length)] + // Pick random message.
+                                      (Setting[3].Get<bool>() ? rnd.Next(0, 9999).ToString() : ""));
+            }
         }
     }
 }
