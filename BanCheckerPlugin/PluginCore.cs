@@ -80,7 +80,7 @@ namespace BanCheckerPlugin
             var permission = EventPermissions.CheckPermissions("low-level");
             if(permission == false)
                 DiscordHelper.Error("Not enough permissions, plugin requires 'All permissions'.", 1);
-            EventPermissions.LowLevelHook(LowLevelEvents.OnServerInitialResponse, ServerResponse);
+            EventPermissions.LowLevelHook(GetName(), LowLevelEvents.OnServerInitialResponse, ServerResponse);
 
             bool exists = false;
             // Check if the files exist.
@@ -99,8 +99,8 @@ namespace BanCheckerPlugin
 
         private void ServerResponse(IPermittedCredentials permittedCredentials, IPermittedServer permittedServer, IPermittedConnection connection) {
             
-            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), Format(permittedCredentials));}
-            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), Format(permittedCredentials));
+            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Environment.NewLine + Setting[0].Get<string>(), Format(permittedCredentials));}
+            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Environment.NewLine+Setting[1].Get<string>(), Format(permittedCredentials));
         }
 
         private string Format(IPermittedCredentials permittedCredentials) {
