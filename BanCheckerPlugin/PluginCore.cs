@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using OQ.MineBot.PluginBase;
 using OQ.MineBot.PluginBase.Base;
+using OQ.MineBot.PluginBase.Base.Permissions;
 using OQ.MineBot.PluginBase.Classes.Base;
 using OQ.MineBot.PluginBase.Utility;
 
@@ -74,6 +75,12 @@ namespace BanCheckerPlugin
         /// </summary>
         public void OnEnabled() {
 
+            // Request permissions to hook low level events.
+            var permission = EventPermissions.CheckPermissions("low-level");
+            if(permission == false)
+                DiscordHelper.Error("Not enough permissions, plugin requires 'All permissions'.", 1);
+            EventPermissions.LowLevelHook(LowLevelEvents.OnServerInitialResponse, ServerResponse);
+
             bool exists = false;
             // Check if the files exist.
             if (!File.Exists(Setting[0].Get<string>())) {
@@ -87,6 +94,12 @@ namespace BanCheckerPlugin
 
             if(!exists)
                 DiscordHelper.Error("No output paths have been set.", 1);
+        }
+
+        private void ServerResponse(IPermittedCredentials permittedCredentials, IPermittedServer permittedServer, IPermittedConnection connection) {
+            
+            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), permittedCredentials.Email + ":" + permittedCredentials.Password);}
+            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), permittedCredentials.Email + ":" + permittedCredentials.Password);
         }
 
         /// <summary>
