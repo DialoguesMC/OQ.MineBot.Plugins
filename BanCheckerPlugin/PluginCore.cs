@@ -54,6 +54,7 @@ namespace BanCheckerPlugin
         {
             new PathSetting("Banned accounts", "Outputs banned accounts to this file.", ""),
             new PathSetting("Unbanned accounts", "Outputs unbanned accounts to this file.", ""),
+            new ComboSetting("Format", "Format that the accounts will be save in.", new string[] { "Email:Password","Email", "Username"}, 0)
         };
 
         /// <summary>
@@ -98,8 +99,18 @@ namespace BanCheckerPlugin
 
         private void ServerResponse(IPermittedCredentials permittedCredentials, IPermittedServer permittedServer, IPermittedConnection connection) {
             
-            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), permittedCredentials.Email + ":" + permittedCredentials.Password);}
-            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), permittedCredentials.Email + ":" + permittedCredentials.Password);
+            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), Format(permittedCredentials));}
+            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), Format(permittedCredentials));
+        }
+
+        private string Format(IPermittedCredentials permittedCredentials) {
+            if (Setting[2].Get<int>() == 0)
+                return permittedCredentials.Email + ":" + permittedCredentials.Password;
+            if (Setting[2].Get<int>() == 1)
+                return permittedCredentials.Email;
+            if (Setting[2].Get<int>() == 2)
+                return permittedCredentials.Username;
+            throw new ArgumentException();
         }
 
         /// <summary>
