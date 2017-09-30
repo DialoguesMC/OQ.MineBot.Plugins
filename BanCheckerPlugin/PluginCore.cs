@@ -78,8 +78,10 @@ namespace BanCheckerPlugin
 
             // Request permissions to hook low level events.
             var permission = EventPermissions.CheckPermissions("low-level");
-            if(permission == false)
+            if (permission == false) {
                 DiscordHelper.Error("Not enough permissions, plugin requires 'All permissions'.", 1);
+                return;
+            }
             EventPermissions.LowLevelHook(GetName(), LowLevelEvents.OnServerInitialResponse, ServerResponse);
 
             bool exists = false;
