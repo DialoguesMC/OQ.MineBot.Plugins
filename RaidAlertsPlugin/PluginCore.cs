@@ -65,7 +65,7 @@ namespace RaidAlertsPlugin
             new BoolSetting("Wither notifications", "", true),
             new BoolSetting("Creeper notifications", "", true),
             new BoolSetting("Player notifications", "", true),
-            new StringSetting("Friendly uuid(s)", "Uuids split by space.", ""),
+            new StringSetting("Friendly uuid(s)/name(s)", "Uuids/name(s) split by space.", ""),
             new StringSetting("Lamp coordinates", "Coordinates in the [X Y Z] format, split by a space", "[-1 -1 -1] [0 0 0] [1 1 1]"),
             new LinkSetting("Add bot", "Adds the bot to your discord channel (you must have administrator permissions).", "https://discordapp.com/oauth2/authorize?client_id=299708378236583939&scope=bot&permissions=6144"),
 
@@ -216,7 +216,8 @@ namespace RaidAlertsPlugin
                 var friendly = friendlyFixed.Split(' ');
                 if (!friendly.Contains(playerEntity.uuid)) {
                     var name = player.entities.FindNameByUuid(playerEntity.uuid);
-                    NotifyUser(ApplyVariables(Setting[9].Get<string>(), player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
+                    if(!friendly.Contains(name.Name))
+                        NotifyUser(ApplyVariables(Setting[9].Get<string>(), player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
                 }
             }
             else {
