@@ -101,8 +101,8 @@ namespace BanCheckerPlugin
 
         private void ServerResponse(IPermittedCredentials permittedCredentials, IPermittedServer permittedServer, IPermittedConnection connection) {
             
-            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Environment.NewLine + Setting[0].Get<string>(), Format(permittedCredentials));}
-            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Environment.NewLine+Setting[1].Get<string>(), Format(permittedCredentials));
+            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), Environment.NewLine+Format(permittedCredentials));}
+            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), Environment.NewLine +Format(permittedCredentials));
         }
 
         private string Format(IPermittedCredentials permittedCredentials) {
