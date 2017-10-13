@@ -76,6 +76,10 @@ namespace BanCheckerPlugin
         /// </summary>
         public void OnEnabled() {
 
+            // CLear the list in-case
+            // it was restarted.
+            AccountsSaved.Clear();
+            
             // Request permissions to hook low level events.
             var permission = EventPermissions.CheckPermissions("low-level");
             if (permission == false) {
@@ -99,10 +103,17 @@ namespace BanCheckerPlugin
                 DiscordHelper.Error("No output paths have been set.", 1);
         }
 
+        private static Dictionary<string, string> AccountsSaved = new Dictionary<string, string>(); 
         private void ServerResponse(IPermittedCredentials permittedCredentials, IPermittedServer permittedServer, IPermittedConnection connection) {
             
-            if(!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), Environment.NewLine+Format(permittedCredentials));}
-            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), Environment.NewLine +Format(permittedCredentials));
+            // Check if this account has been
+            // already checked.
+            if (AccountsSaved.ContainsKey(permittedCredentials.Email)) return; // Account already saved.
+
+            AccountsSaved.Add(permittedCredentials.Email, permittedCredentials.Password); // Add to list, so we don't save it twice.
+
+            if (!connection.Connected) { if(File.Exists(Setting[0].Get<string>())) File.AppendAllText(Setting[0].Get<string>(), Environment.NewLine + Format(permittedCredentials));}
+            else if(File.Exists(Setting[1].Get<string>())) File.AppendAllText(Setting[1].Get<string>(), Environment.NewLine + Format(permittedCredentials));
         }
 
         private string Format(IPermittedCredentials permittedCredentials) {
