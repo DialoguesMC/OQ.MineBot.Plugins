@@ -214,7 +214,7 @@ namespace RaidAlertsPlugin
                 var playerEntity = (IPlayerEntity) entity;
                 var friendlyFixed = Setting[6].Get<string>().Replace("-", "");
                 var friendly = friendlyFixed.Split(' ');
-                if (!friendly.Contains(playerEntity.uuid)) {
+                if (!friendly.Contains(playerEntity.uuid, StringComparer.CurrentCultureIgnoreCase)) {
                     var name = player.entities.FindNameByUuid(playerEntity.uuid);
                     if(!friendly.Contains(name.Name))
                         NotifyUser(ApplyVariables(Setting[9].Get<string>(), player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
