@@ -272,7 +272,7 @@ namespace AreaMiner
                 if (!equiped) {
                     //This tick we are equiping a tool,
                     //so on the next tick start mining.
-                    EquipBest();
+                    player.functions.SelectBestTool(target);
                     this.equiped = true;
 
                     //We should use the same tick to set up
@@ -356,46 +356,6 @@ namespace AreaMiner
                 this.mining = false;
                 this.equiped = false;
                 this.target = null;
-            }
-        }
-
-
-        /// <summary>
-        /// Equips best tool that we have in
-        /// the inventory for the target block.
-        /// </summary>
-        private void EquipBest() {
-
-            //Check if the target is valid.
-            if (target == null) return;
-
-            //Check if we have a tool for the specific block.
-            var blockType = BlocksGlobal.blockHolder.GetBlock(player.world.GetBlockId(target.x, (int)target.y, target.z));
-            if (blockType != null && blockType.material != null && blockType.material.requiredTool != MaterialTools.ANY) {
-                //Get items that would be acceptable.
-                var acceptable = ItemsGlobal.itemHolder.GetItems(blockType.material.requiredTool);
-                if (acceptable != null) {
-
-                    //Extract ids.
-                    var ids = acceptable.Select(x => (int)x.id).ToArray();
-
-                    //We should eat, check if we have tools.
-                    if (player.status.containers.inventory.hotbar.FindId(ids) == -1) { //We should find it in inventory.
-                                                                                        //Find the slot.
-                        var slot = player.status.containers.inventory.inner.FindId(ids);
-                        if (slot != -1) {
-                            player.status.containers.inventory.hotbar.BringToHotbar(6, slot, null); //Bring to held slot.
-                        }
-                    }
-
-                    //Check if we have any tools in the hotbar.
-                    var toolSlot = player.status.containers.inventory.hotbar.FindId(ids);
-                    //Check if we have the tool in hotbar.
-                    if (toolSlot != -1) {
-                        //Select the item in hotbar.
-                        player.functions.SetHotbarSlot((short)(toolSlot - 36));
-                    }
-                }
             }
         }
 
