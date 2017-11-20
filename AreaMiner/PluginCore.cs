@@ -16,6 +16,7 @@ using OQ.MineBot.PluginBase.Classes.Entity.Player;
 using OQ.MineBot.PluginBase.Classes.Items;
 using OQ.MineBot.PluginBase.Classes.Materials;
 using OQ.MineBot.PluginBase.Classes.Physics;
+using OQ.MineBot.PluginBase.Movement.Maps;
 using OQ.MineBot.PluginBase.Pathfinding;
 using OQ.MineBot.Protocols.Classes.Base;
 
@@ -27,6 +28,7 @@ namespace AreaMiner
         /// How accurate pathing should be.
         /// </summary>
         public MapOptions PathOptions = new MapOptions() { Look = false, Quality = SearchQuality.MEDIUM, Mine = true };
+        public MapOptions ZoneReachOptions = new MapOptions() { Look = true, Quality = SearchQuality.HIGH, Mine = true };
 
         private IPlayer player;
 
@@ -242,6 +244,12 @@ namespace AreaMiner
                 || moving || mining || IsMacroRunning())
                 return;
 
+            // Before starting to mine check if
+            // every bot has reached their spot,
+            // so that they wouldn't get stuck.
+            if (MoveCenterWait())
+                return;
+
 
             //Check if we are full.
             if (Setting[2].value != null && !string.IsNullOrWhiteSpace(Setting[2].Get<string>()) &&
@@ -265,6 +273,21 @@ namespace AreaMiner
 
             //Check if we should mine something.
             if (this.target != null) {
+
+                // Check if this is safe to mine, now that
+                // we have moved to this position.
+                // (Might be that we moved on top of this block
+                // and it is no longer safe to mine because
+                // we would fall into it)
+                if (!IsSafe(this.target)) {
+                    // Do not move to this block again.
+                    broken.TryAdd(this.target, DateTime.Now);
+
+                    //Reset states.
+                    this.mining = false;
+                    this.equiped = false;
+                    this.target = null;
+                }
 
                 //We have reached the position we wanted,
                 //but the target is still valid, meaning
@@ -303,12 +326,51 @@ namespace AreaMiner
                 //Create the map and hook all the
                 //callbacks.
                 var success = player.functions.WaitMoveToRange(target, stopToken, PathOptions);
-                if (!success)
+                if (!success && this.target != null) {
+                    broken.TryAdd(this.target, DateTime.Now);
                     this.target = null;
+                }
 
                 this.moving = false;
             });
         }
+
+        // Attempts to move to the bot's zone and
+        // waits for all other bots to reach it.
+        private bool MoveCenterWait() {
+
+            if(!_zoneReached)
+                if (this.moving)
+                    return true;
+                else {
+                    // Check if we need to move to our spot.
+                    var zone = Shares.Get(this.player);
+                    ILocation center = zone.GetClosestWalkable(player.world, player.status.entity.location.ToLocation(), true);
+
+                    var map = player.functions.AsyncMoveToLocation(center, stopToken, ZoneReachOptions);
+                    map.Completed += areaMap => {
+                        Shares.RegisterReach(this.player);
+                        this._zoneReached = true;
+                        this.moving = false;
+                    };
+                    map.Cancelled += (areaMap, cuboid) => {
+                        Shares.RegisterReach(this.player);
+                        this._zoneReached = true;
+                        this.moving = false;
+                    };
+
+                    //Start moving.
+                    this.moving = true;
+                    map.Start();
+                }
+
+            // We have reached our target, check
+            //if we need to wait for others.
+            if (!Shares.AllReached())
+                return true;
+            return false;  // Everybody is done, start mining.
+        }
+        private bool _zoneReached = false;
 
         private void Events_onDisconnected(IPlayer player, string reason) {
 
@@ -324,16 +386,17 @@ namespace AreaMiner
         /// the target location.
         /// </summary>
         private void MineTarget() {
-
             //Update the mining state.
             this.mining = true;
 
             //Attempt to mine the target.
             digAction = player.functions.BlockDig(this.target, MiningResult);
 
+            // Add to block list as we already mined it.
+            broken.TryAdd(this.target, DateTime.Now);
+            
             //Check for insta cancelled.
             if (digAction.cancelled || !digAction.valid) {
-
                 //Insta completed:
                 //Reset states.
                 this.mining = false;
@@ -375,8 +438,8 @@ namespace AreaMiner
             double distance = int.MaxValue;
             for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y + 1; y--)
                 if(closest == null)
-                    for (int x = playerRadius.start.x; x < playerRadius.start.x + playerRadius.xSize; x++)
-                        for (int z = playerRadius.start.z; z < playerRadius.start.z + playerRadius.zSize; z++) {
+                    for (int x = playerRadius.start.x; x <= playerRadius.start.x + playerRadius.xSize; x++)
+                        for (int z = playerRadius.start.z; z <= playerRadius.start.z + playerRadius.zSize; z++) {
 
                             var tempLocation = new Location(x, y, z);
                             //Check if the block is valid for mining.
@@ -387,6 +450,9 @@ namespace AreaMiner
                                 continue;
                             if(ignoreIds?.Contains(player.world.GetBlockId(x, y, z)) == true)
                                 continue;
+
+                            // Check if this block is safe to mine.
+                            if(!IsSafe(tempLocation)) continue;
 
                             if (closest == null) {
                                 distance = tempLocation.Distance(player.status.entity.location.ToLocation(0));
@@ -399,6 +465,19 @@ namespace AreaMiner
                         }
 
             return closest;
+        }
+
+        private bool IsSafe(ILocation location) {
+
+            // Check if it's safe to mine.
+            if (player.world.IsStandingOn(location, player.status.entity.location)) {
+                if (!BlocksGlobal.blockHolder.IsSafeToMine(player.world, location, true))
+                    return false;
+            }
+            else if (!BlocksGlobal.blockHolder.IsSafeToMine(player.world, location, false))
+                return false;
+
+            return true;
         }
 
         private bool IsMacroRunning() {
@@ -436,6 +515,7 @@ namespace AreaMiner
 public class ShareManager
 {
     private ConcurrentDictionary<IPlayer, IRadius> _Zones = new ConcurrentDictionary<IPlayer, IRadius>();
+    private ConcurrentDictionary<IPlayer, bool> _Reached = new ConcurrentDictionary<IPlayer, bool>();
     private readonly IRadius _Total;
 
     private bool _Processing;
@@ -448,10 +528,22 @@ public class ShareManager
         this._Total = total;
     }
 
+    private bool _reached = false;
+    public void RegisterReach(IPlayer player) {
+
+        _Reached[player] = true;
+        if (_Reached.All(x => x.Value)) _reached = true;
+        else _reached = false;
+    }
+    public bool AllReached() {
+        return _reached;
+    }
+
     public void Add(IPlayer player) {
 
         // Add a new player to the zone array.
         _Zones.TryAdd(player, new IRadius(_Total.start, new Location(_Total.start.x + _Total.xSize, _Total.start.y + _Total.height, _Total.start.z + _Total.zSize)));
+        _Reached.TryAdd(player, false);
 
         // Update all shares, as we
         // got another person in.
@@ -496,18 +588,18 @@ public class ShareManager
         if (_Total.xSize > _Total.zSize) {
             x = (int)Math.Ceiling((double)_Total.xSize/(double)count);
             l = _Total.xSize;
-            z = _Total.zSize + 1;
+            z = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
                 zones[i].Value.UpdateHorizontal(new Location(_Total.start.x + x*i, 0, _Total.start.z),
-                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - (x*i)-1 : 0), 0, _Total.start.z + z));
+                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - (x*(i+1)): 0), 0, _Total.start.z + z));
         }
         else {
-            x = _Total.xSize + 1;
+            x = _Total.xSize;
             z = (int)Math.Ceiling((double)_Total.zSize/(double)count);
             l = _Total.zSize;
             for (int i = 0; i < zones.Length; i++)
                 zones[i].Value.UpdateHorizontal(new Location(_Total.start.x, 0, _Total.start.z + z*i),
-                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l - (z*i) -1:0)));
+                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l - (z*(i+1)):0)));
         }
     }
 }
