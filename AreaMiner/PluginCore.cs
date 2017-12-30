@@ -287,6 +287,7 @@ namespace AreaMiner
                     this.mining = false;
                     this.equiped = false;
                     this.target = null;
+                    return;
                 }
 
                 //We have reached the position we wanted,
@@ -320,7 +321,7 @@ namespace AreaMiner
             //Attempt to move to the target.
             //Update moving state.
             this.moving = true;
-
+            
             ThreadPool.QueueUserWorkItem(state => 
             {
                 //Create the map and hook all the
@@ -354,8 +355,7 @@ namespace AreaMiner
                         this.moving = false;
                     };
                     map.Cancelled += (areaMap, cuboid) => {
-                        Shares.RegisterReach(this.player);
-                        this._zoneReached = true;
+                        this._zoneReached = false;
                         this.moving = false;
                     };
 
@@ -389,12 +389,15 @@ namespace AreaMiner
             //Update the mining state.
             this.mining = true;
 
-            //Attempt to mine the target.
-            digAction = player.functions.BlockDig(this.target, MiningResult);
+            if (this.target != null) {
 
-            // Add to block list as we already mined it.
-            broken.TryAdd(this.target, DateTime.Now);
-            
+                // Add to block list as we already mined it.
+                broken.TryAdd(this.target, DateTime.Now);
+
+                //Attempt to mine the target.
+                digAction = player.functions.BlockDig(this.target, MiningResult);
+            }
+
             //Check for insta cancelled.
             if (digAction.cancelled || !digAction.valid) {
                 //Insta completed:

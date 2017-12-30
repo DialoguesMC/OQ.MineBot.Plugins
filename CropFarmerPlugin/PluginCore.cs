@@ -223,7 +223,7 @@ namespace CropFarmerPlugin
             if (growBlocks == null) return;
 
             //Check inventory.
-            Events_onInventoryUpdate(player, false, false);
+            Events_onInventoryUpdate(player, false, false, 0, -1);
             if (storing) return;
 
             //Check if there is a block that has grown.
@@ -291,7 +291,7 @@ namespace CropFarmerPlugin
             passedTicks = 0;
         }
 
-        private void Events_onInventoryUpdate(IPlayer player, bool changed, bool removed)
+        private void Events_onInventoryUpdate(IPlayer player, bool changed, bool removed, ushort id, int cdiff)
         {
 
             //Already trying tos tore items.
@@ -402,14 +402,8 @@ namespace CropFarmerPlugin
             //a radius of 64 blocks (4 chunks).
             var location = player.status.entity.location;
 
-            ILocation[] tempBlocks = new ILocation[0];
-            for (int i = 0; i < Farmable.Length; i++) {
-                List<ILocation> temp =
-                    player.world.GetBlockLocations(location.X, location.Y, location.Z, Setting[0].Get<int>(),
-                        Setting[1].Get<int>(), Farmable[i]).ToList();
-
-                tempBlocks = tempBlocks.Concat(temp).ToArray();
-            }
+            ILocation[] tempBlocks = player.world.GetBlockLocations(location.X, location.Y, location.Z, Setting[0].Get<int>(),
+                        Setting[1].Get<int>(), Farmable).ToArray();
             chestMap = player.functions.CreateChestMap();
             chestMap.UpdateChestList(player);
 

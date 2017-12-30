@@ -359,53 +359,52 @@ namespace SandPrinterPlugin
         }
 
         private ILocation FindTarget() {
-            
+
+            var h = (int) totalRadius.start.y + totalRadius.height;
+
             //Search from top to bottom.
             //(As that is easier to manager)
-            for (int y = (int)totalRadius.start.y + totalRadius.height; y >= (int)totalRadius.start.y - totalRadius.height; y--)
-                for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize; x++)
-                    for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
-                    {
-                        //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0 || player.status.entity.location.Distance(new Position(x + 0.5f, y, z + 0.5f)) > MAX_RANGE)
-                            continue;
+            for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize + 1; x++)
+                for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize + 1; z++) {
+                    //Check if the block is valid for mining.
+                    if (Taken.ContainsKey(new Location(x, h, z)) || player.world.GetBlockId(x, h, z) != 0 || player.status.entity.location.Distance(new Position(x + 0.5f, h, z + 0.5f)) > MAX_RANGE)
+                        continue;
 
-                        return new Location(x, y, z);
-                    }
+                    return new Location(x, h, z);
+                }
 
             return null;
         }
 
         private ILocation FindTargetClosest() {
 
+            var h = (int)totalRadius.start.y + totalRadius.height;
+
             List<ILocation> locations = new List<ILocation>();
             //Search from top to bottom.
             //(As that is easier to manager)
-            for (int y = (int)totalRadius.start.y + totalRadius.height; y >= (int)totalRadius.start.y - totalRadius.height; y--)
-                for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize; x++)
-                    for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
-                    {
-                        //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0)
-                            continue;
+            for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize + 1; x++)
+                for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize + 1; z++) {
+                    //Check if the block is valid for mining.
+                    if (Taken.ContainsKey(new Location(x, h, z)) || player.world.GetBlockId(x, h, z) != 0)
+                        continue;
 
-                        locations.Add(new Location(x, y,z));
-                    }
+                    locations.Add(new Location(x, h, z));
+                }
 
             return locations.OrderBy(x => x.Distance(player.status.entity.location.ToLocation(-1))).FirstOrDefault();
         }
         private ILocation[] FindSurroundingTargets() {
 
+            var h = (int)totalRadius.start.y + totalRadius.height;
             List<ILocation> list = new List<ILocation>();
-            for (int y = (int)totalRadius.start.y + totalRadius.height; y >= (int)totalRadius.start.y - totalRadius.height; y--)
-                for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize; x++)
-                    for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize; z++)
-                    {
+            for (int x = totalRadius.start.x; x < totalRadius.start.x + totalRadius.xSize + 1; x++)
+                    for (int z = totalRadius.start.z; z < totalRadius.start.z + totalRadius.zSize + 1; z++) {
                         //Check if the block is valid for mining.
-                        if (Taken.ContainsKey(new Location(x, y, z)) || player.world.GetBlockId(x, y, z) != 0 || player.status.entity.location.Distance(new Position(x,y,z)) > REACH)
+                        if (Taken.ContainsKey(new Location(x, h, z)) || player.world.GetBlockId(x, h, z) != 0 || player.status.entity.location.Distance(new Position(x,h,z)) > REACH)
                             continue;
 
-                        list.Add(new Location(x, y, z));
+                        list.Add(new Location(x, h, z));
                     }
 
             return list.ToArray();

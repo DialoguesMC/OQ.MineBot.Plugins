@@ -238,7 +238,7 @@ namespace SugarcaneFarmerPlugin
 
             //Check if the inventory is full, if it is full
             //stop the current tick as we are attempting to store items.
-            Events_onInventoryUpdate(player, false, false);
+            Events_onInventoryUpdate(player, false, false, 0, -1);
             if (storing) return;
             
             //Check if there is a block that has grown.
@@ -303,7 +303,7 @@ namespace SugarcaneFarmerPlugin
             }
         }
 
-        private void Events_onInventoryUpdate(IPlayer player, bool changed, bool removed) {
+        private void Events_onInventoryUpdate(IPlayer player, bool changed, bool removed, ushort id, int cdiff) {
 
             //Already trying tos tore items.
             if (storing) return;

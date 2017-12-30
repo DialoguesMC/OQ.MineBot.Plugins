@@ -67,7 +67,7 @@ namespace ShieldPlugin
         public IPluginSetting[] Setting { get; set; } = 
         {
             new StringSetting("Owner name/uuid", "Player that the bots will follow.", ""),
-            new NumberSetting("Attack speed", "How fast should the bot attack?", 5, 0, 25, 1),
+            new NumberSetting("Clicks per second", "How fast should the bot attack?", 5, 1, 60, 1),
             new NumberSetting("Miss rate", "How often does the bot miss?", 15, 0, 100, 1),
             new StringSetting("Friendly name(s)/uuid(s)", "Uuids of the user that own't be hit. Split by spaces'", ""),
             new BoolSetting("Auto equip best armor?", "Should the bot auto equip the best armor it has?", true),
@@ -185,7 +185,7 @@ namespace ShieldPlugin
 
         private bool initialCalled = false;
         private bool inprogress = false;
-        private void Events_onHealthUpdate(IPlayer player, bool changed, bool deleted) {
+        private void Events_onHealthUpdate(IPlayer player, bool changed, bool deleted, ushort id, int cdiff) {
 
             if (deleted || ownerEntity == null) return;
             initialCalled = true;
@@ -251,7 +251,7 @@ namespace ShieldPlugin
                 //Attempt to find a new owner.
                 this.ownerEntity = GetOwner(player);
                 if (!initialCalled)
-                    Events_onHealthUpdate(player, true, false);
+                    Events_onHealthUpdate(player, true, false, 0, -1);
             }
 
             //Add unadded friendlies.
@@ -295,6 +295,8 @@ namespace ShieldPlugin
 
                     if(currentTarget != null && currentTarget.location.Distance(player.status.entity.location) < 1 && player.physicsEngine.path?.Complete == false)
                         areaMap.CalculateFromNext(player.world, currentTarget);
+                    else // Calculate path to the newest owners location.
+                        areaMap.CalculateFromNext(player.world, ownerEntity);
                 };
 
                 //Start the pathing process.
@@ -375,7 +377,11 @@ namespace ShieldPlugin
 
                 //Check if we should attack.
                 hitTicks++;
-                if (hitTicks >= (50/Setting[1].Get<int>())) {
+
+                // 1 hit tick is about 50 ms.
+                int ms = hitTicks*50;
+
+                if (ms >= (1000/Setting[1].Get<int>())) {
                     //Hitting, reset tick counter.
                     hitTicks = 0;
 
