@@ -90,6 +90,7 @@ namespace AreaMiner
             new StringSetting("Macro on inventory full", "Starts the macro when the bots inventory is full.", ""),
             new ComboSetting("Speed mode", null, new string[] { "Accurate", "Fast" }, 0),
             new StringSetting("Ignore ids", "What blocks should be ignored.", ""),
+            new ComboSetting("Path mode", null, new string[] { "Advanced (mining & building)", "Basic" }, 0),
         };
 
         /// <summary>
@@ -120,6 +121,16 @@ namespace AreaMiner
             Shares = new ShareManager(new IRadius(new Location(int.Parse(startSplit[0]), int.Parse(startSplit[1]), int.Parse(startSplit[2])),
                                                   new Location(int.Parse(endSplit[0]), int.Parse(endSplit[1]), int.Parse(endSplit[2]))));
             stopToken.Reset();
+
+            if (Setting[5].Get<int>() == 0) {
+                PathOptions.Mine = true;
+                ZoneReachOptions.Mine = true;
+            }
+            else {
+                PathOptions.Mine = false;
+                ZoneReachOptions.Mine = false;
+            }
+
         }
 
         /// <summary>
@@ -215,7 +226,7 @@ namespace AreaMiner
 
         private void Events_onBlockChanged(IPlayer player, ILocation location, ushort oldId, ushort newId)
         {
-            if (this.target != null && location.Compare(this.target)) {
+            if (this.target != null && location.Compare(this.target) && oldId != newId) {
                 //Insta completed:
                 //Reset states.
                 this.mining = false;
@@ -346,6 +357,7 @@ namespace AreaMiner
                 else {
                     // Check if we need to move to our spot.
                     var zone = Shares.Get(this.player);
+                    if (zone == null) return true;
                     ILocation center = zone.GetClosestWalkable(player.world, player.status.entity.location.ToLocation(), true);
 
                     var map = player.functions.AsyncMoveToLocation(center, stopToken, ZoneReachOptions);
@@ -392,7 +404,8 @@ namespace AreaMiner
             if (this.target != null) {
 
                 // Add to block list as we already mined it.
-                broken.TryAdd(this.target, DateTime.Now);
+                if(Setting[5].Get<int>() == 0) // Only do this on 'Advanced' mode.
+                    broken.TryAdd(this.target, DateTime.Now);
 
                 //Attempt to mine the target.
                 digAction = player.functions.BlockDig(this.target, MiningResult);
@@ -439,7 +452,7 @@ namespace AreaMiner
             //(As that is easier to manager)
             ILocation closest = null;
             double distance = int.MaxValue;
-            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y + 1; y--)
+            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y; y--)
                 if(closest == null)
                     for (int x = playerRadius.start.x; x <= playerRadius.start.x + playerRadius.xSize; x++)
                         for (int z = playerRadius.start.z; z <= playerRadius.start.z + playerRadius.zSize; z++) {
@@ -554,7 +567,9 @@ public class ShareManager
     }
 
     public IRadius Get(IPlayer player) {
-        return _Zones[player];
+        if (_Zones.ContainsKey(player))
+            return _Zones[player];
+        return null;
     }
 
     private void Update() {

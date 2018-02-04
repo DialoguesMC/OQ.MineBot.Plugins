@@ -146,7 +146,7 @@ namespace AutoFishPlugin
 
         private const int ROD_ID = 346;
         private const int WATER_ID = 9;
-
+        
         private bool castTick = false;
         private bool lookTick = true;
         private int tick = 0;
@@ -162,6 +162,12 @@ namespace AutoFishPlugin
         /// <param name="player"></param>
         /// <returns></returns>
         public PluginResponse OnStart(IPlayer player) {
+
+            //Check if bot settings are valid.
+            if (!player.settings.loadEntities || !player.settings.loadMobs) {
+                Console.WriteLine("[AutoFisher] 'Load entities' & 'Load mobs' must be enabled.");
+                return new PluginResponse(false, "'Load entities' & 'Load mobs' must be enabled.");
+            }
 
             //Assign values.
             this.player = player;
@@ -188,7 +194,8 @@ namespace AutoFishPlugin
             if (DateTime.Now.Subtract(castTime).TotalSeconds < CAST_TIME)
                 return;
 
-            if (x != 0 || z != 0 || y > MOTION_Y_TRESHOLD[Setting[1].Get<int>()]) return;
+            double yd = (double)y / 8000;
+            if (x != 0 || z != 0 || yd > MOTION_Y_TRESHOLD[Setting[1].Get<int>()]) return;
 
             // Reel in, we got a fish probably.
             this.reelTick = true;
