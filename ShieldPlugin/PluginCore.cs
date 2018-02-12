@@ -422,10 +422,13 @@ namespace ShieldPlugin
         }
 
         public void Add(ResolvableName Name) {
-            this.Names.Add(Name);
-            if (!Name.Resolved)
+            if (Name == null || !Name.Resolved) {
                 m_unresolved += 1;
-            else Targeter.IgnoreList.Add(Name.Uuid);
+                return; // Safety check.
+            }
+
+            this.Names.Add(Name);
+            Targeter.IgnoreList.Add(Name.Uuid);
         }
 
         public bool HasUnresolved() {

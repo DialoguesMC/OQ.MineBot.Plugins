@@ -120,7 +120,6 @@ namespace AreaMiner
             }
             Shares = new ShareManager(new IRadius(new Location(int.Parse(startSplit[0]), int.Parse(startSplit[1]), int.Parse(startSplit[2])),
                                                   new Location(int.Parse(endSplit[0]), int.Parse(endSplit[1]), int.Parse(endSplit[2]))));
-            stopToken.Reset();
 
             if (Setting[5].Get<int>() == 0) {
                 PathOptions.Mine = true;
@@ -176,6 +175,7 @@ namespace AreaMiner
                 Console.WriteLine("[AreaMiner] Can't start the plugin from the 'Accounts' tab.");
                 return new PluginResponse(false, "Can't start the plugin from the 'Accounts' tab.");
             }
+            stopToken.Reset();
 
             //Check if bot settings are valid.
             if (!player.settings.loadWorld) {

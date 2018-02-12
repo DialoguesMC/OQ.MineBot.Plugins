@@ -200,13 +200,15 @@ namespace RaidAlertsPlugin
         private void Entities_onEntityAdded(OQ.MineBot.PluginBase.Classes.Entity.IEntity entity, OQ.MineBot.PluginBase.Classes.Physics.EventCancelToken token) {
 
             //Check if we should stop the plugin.
-            if (stopToken.stopped)
-            {
+            if (stopToken.stopped) {
                 player.events.onExplosion -= Events_onExplosion;
                 player.entities.onEntityAdded -= Entities_onEntityAdded;
                 player.events.onBlockChanged -= Events_onBlockChanged;
                 return;
             }
+
+            // Check for errors.
+            if (entity == null) return;
 
             //Check if it's a player.
             var isPlayer = entity.GetType().GetInterfaces().Contains(typeof (IPlayerEntity));
@@ -215,8 +217,8 @@ namespace RaidAlertsPlugin
                 var friendlyFixed = Setting[6].Get<string>().Replace("-", "");
                 var friendly = friendlyFixed.Split(' ');
                 if (!friendly.Contains(playerEntity.uuid, StringComparer.CurrentCultureIgnoreCase)) {
-                    var name = player.entities.FindNameByUuid(playerEntity.uuid);
-                    if(!friendly.Contains(name.Name))
+                    var name = player.entities.FindNameByUuid(playerEntity?.uuid);
+                    if(name?.Name != null && !friendly.Contains(name.Name))
                         NotifyUser(ApplyVariables(Setting[9].Get<string>(), player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
                 }
             }

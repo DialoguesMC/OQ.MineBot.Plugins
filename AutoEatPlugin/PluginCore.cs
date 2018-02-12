@@ -19,7 +19,7 @@ namespace AutoEatPlugin
     {
         public static ushort[] HealingFood = {322};
         public static ushort[] HealingSoup = { 282 };
-        public static ushort[] Food = { 260, 297, 319, 320, 350, 357, 360, 364, 366, 391, 393, 400 };
+        public static ushort[] Food = { 260, 297, 319, 320, 350, 357, 360, 364, 366, 391, 393, 400, 424 };
 
         /// <summary>
         /// Name of the plugin.
@@ -59,8 +59,8 @@ namespace AutoEatPlugin
         /// </summary>
         public IPluginSetting[] Setting { get; set; } =
         {
-            new NumberSetting("Eat when hunger is below X", "When should the bot eat normal food (-1 if it shouldn't eat them).", -1, -1, 19, 14),
-            new NumberSetting("Eat gapples when below X hp", "When should the bot eat golden apples (-1 if it shouldn't eat them).", -1, -1, 20, 1),
+            new NumberSetting("Eat when hunger is below X", "When should the bot eat normal food (-1 if it shouldn't eat them).", -1, -1, 19, 1),
+            new NumberSetting("Eat gapples when below X hp", "When should the bot eat golden apples (-1 if it shouldn't eat them).", -1, -1, 19, 1),
             new ComboSetting("Mode", null, new string[] { "Efficient", "Accurate" }, 0),
             new BoolSetting("Soup", "Can the bot use soup for healing?", false),
         };

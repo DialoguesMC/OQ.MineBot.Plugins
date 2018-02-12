@@ -114,8 +114,6 @@ namespace TextSpammerPlugin
         /// <param name="player"></param>
         /// <returns></returns>
         public PluginResponse OnStart(IPlayer player) {
-            
-            player.events.onTick += OnTick;
 
             // Attempt to get the messages.
             if(string.IsNullOrWhiteSpace(Setting[0].Get<string>()) || !File.Exists(Setting[0].Get<string>()))
@@ -123,6 +121,8 @@ namespace TextSpammerPlugin
             Messages = File.ReadAllLines(Setting[0].Get<string>());
             if(Messages.Length == 0)
                 return new PluginResponse(false, "Invalid text file selected.");
+
+            player.events.onTick += OnTick;
 
             return new PluginResponse(true);
         }
@@ -145,11 +145,15 @@ namespace TextSpammerPlugin
                 NextMessage =
                     DateTime.Now.AddMilliseconds(Setting[2].Get<int>() == -1 // Check if Max delay is disabled.
                         ? Setting[1].Get<int>() // Max delay disabled, use min delay.
-                        : rnd.Next(Math.Min(Setting[1].Get<int>(), Setting[2].Get<int>()), Math.Max(Setting[1].Get<int>(), Setting[2].Get<int>())));
+                        : rnd.Next(Math.Min(Setting[1].Get<int>(), Setting[2].Get<int>()), 
+                                   Math.Max(Setting[1].Get<int>(), Setting[2].Get<int>()))
+                        );
 
                 // Post chat message.
-                player.functions.Chat(Messages[rnd.Next(0, Messages.Length)] + // Pick random message.
-                                      (Setting[3].Get<bool>() ? rnd.Next(0, 9999).ToString() : ""));
+                var message = Messages[rnd.Next(0, Messages.Length)];
+                if(!string.IsNullOrWhiteSpace(message))
+                    player.functions.Chat(message +
+                                         (Setting[3].Get<bool>() ? rnd.Next(0, 9999).ToString() : ""));
             }
         }
     }
