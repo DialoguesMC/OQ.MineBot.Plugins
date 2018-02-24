@@ -33,14 +33,15 @@ namespace SugarcaneFarmerPlugin
 
         public override PluginResponse OnEnable(IBotSettings botSettings) {
             if (!botSettings.loadWorld) return new PluginResponse(false, "'Load world' must be enabled.");
-
+            return new PluginResponse(true);
+        }
+        public override void OnStart() {
             RegisterTask(new Farm(
                             Setting[0].Get<int>(), Setting[1].Get<int>(),
                             (Mode)Setting[2].Get<int>()
                         ));
             RegisterTask(new Store());
 
-            return new PluginResponse(true);
         }
         public override void OnDisable() {
             Farm.beingMined.Clear();

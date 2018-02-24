@@ -42,6 +42,7 @@
   <ItemGroup>
     <Compile Include="PluginCore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\Greet.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\OQ.MineBot.PluginBase\OQ.MineBot.PluginBase.csproj">

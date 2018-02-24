@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\OQ.MineBot.GUI\bin\Debug\plugins\</OutputPath>
+    <OutputPath>..\..\OQ.MineBot.GUI\bin\Debug\plugins\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -57,6 +57,7 @@
     </Compile>
     <Compile Include="PluginCore.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Tasks\FormOpener.cs" />
     <EmbeddedResource Include="OreCounterForm.resx">
       <DependentUpon>OreCounterForm.cs</DependentUpon>
     </EmbeddedResource>
@@ -102,7 +103,7 @@
     <None Include="Resources\32px-Steinkohle.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\OQ.MineBot.PluginBase\OQ.MineBot.PluginBase.csproj">
+    <ProjectReference Include="..\..\OQ.MineBot.PluginBase\OQ.MineBot.PluginBase.csproj">
       <Project>{118cb5e9-aae0-4d43-b053-208da0aedd31}</Project>
       <Name>OQ.MineBot.PluginBase</Name>
     </ProjectReference>
