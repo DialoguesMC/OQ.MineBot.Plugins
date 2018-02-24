@@ -2,622 +2,170 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using OQ.MineBot.GUI.Protocol.Movement.Maps;
+using AreaMiner.Tasks;
 using OQ.MineBot.PluginBase;
 using OQ.MineBot.PluginBase.Base;
+using OQ.MineBot.PluginBase.Base.Plugin;
+using OQ.MineBot.PluginBase.Bot;
 using OQ.MineBot.PluginBase.Classes;
 using OQ.MineBot.PluginBase.Classes.Base;
-using OQ.MineBot.PluginBase.Classes.Blocks;
-using OQ.MineBot.PluginBase.Classes.Entity;
-using OQ.MineBot.PluginBase.Classes.Entity.Player;
-using OQ.MineBot.PluginBase.Classes.Items;
-using OQ.MineBot.PluginBase.Classes.Materials;
-using OQ.MineBot.PluginBase.Classes.Physics;
-using OQ.MineBot.PluginBase.Movement.Maps;
-using OQ.MineBot.PluginBase.Pathfinding;
 using OQ.MineBot.Protocols.Classes.Base;
 
 namespace AreaMiner
 {
+    [Plugin(1, "Area miner", "Mines the area that is selected by the user.")]
     public class PluginCore : IStartPlugin
     {
-        /// <summary>
-        /// How accurate pathing should be.
-        /// </summary>
-        public MapOptions PathOptions = new MapOptions() { Look = false, Quality = SearchQuality.MEDIUM, Mine = true };
-        public MapOptions ZoneReachOptions = new MapOptions() { Look = true, Quality = SearchQuality.HIGH, Mine = true };
+        private static readonly ShareManager shares = new ShareManager();
 
-        private IPlayer player;
-
-        private IRadius totalRadius;
-
-        private ILocation target;
-        private IDigAction digAction;
-        private bool moving;
-        private bool equiped;
-        private bool mining;
-
-        private bool skipTick;
-        private int  ticks;
-
-        private Task macroTask;
-
-        private int[] ignoreIds;
-
-        /// <summary>
-        /// Name of the plugin.
-        /// </summary>
-        /// <returns></returns>
-        public string GetName() {
-            return "Area miner";
+        public override void OnLoad(int version, int subversion, int buildversion) {
+            this.Setting = new IPluginSetting[6];
+            Setting[0] = new StringSetting("Start x y z", "", "0 0 0");
+            Setting[1] = new StringSetting("End x y z", "", "0 0 0");
+            Setting[2] = new StringSetting("Macro on inventory full", "Starts the macro when the bots inventory is full.", "");
+            Setting[3] = new ComboSetting("Speed mode", null, new string[] {"Accurate", "Fast"}, 0);
+            Setting[4] = new StringSetting("Ignore ids", "What blocks should be ignored.", "");
+            Setting[5] = new ComboSetting("Path mode", null, new string[] {"Advanced (mining & building)", "Basic"}, 0);
         }
 
-        /// <summary>
-        /// Description of what the plugin does.
-        /// </summary>
-        /// <returns></returns>
-        public string GetDescription() {
-            return "Mines the area that is selected by the user.";
-        }
-
-        /// <summary>
-        /// Author of the plugin.
-        /// </summary>
-        /// <returns></returns>
-        public PluginAuthor GetAuthor() {
-            return new PluginAuthor("OnlyQubes");
-        }
-
-        /// <summary>
-        /// Version of the plugin.
-        /// </summary>
-        /// <returns></returns>
-        public string GetVersion() {
-            return "1.02.00";
-        }
-
-        /// <summary>
-        /// All settings should be stored here.
-        /// (NULL if there shouldn't be any settings)
-        /// </summary>
-        public IPluginSetting[] Setting { get; set; } =
-        {
-            new StringSetting("Start x y z", "", "0 0 0"),
-            new StringSetting("End x y z", "", "0 0 0"),
-            new StringSetting("Macro on inventory full", "Starts the macro when the bots inventory is full.", ""),
-            new ComboSetting("Speed mode", null, new string[] { "Accurate", "Fast" }, 0),
-            new StringSetting("Ignore ids", "What blocks should be ignored.", ""),
-            new ComboSetting("Path mode", null, new string[] { "Advanced (mining & building)", "Basic" }, 0),
-        };
-
-        /// <summary>
-        /// Called once the plugin is loaded.
-        /// (Params are the version of the program)
-        /// (This is not reliable as if "Load plugins" 
-        /// isn't enabled this will not be called)
-        /// </summary>
-        /// <param name="version"></param>
-        /// <param name="subversion"></param>
-        /// <param name="buildversion"></param>
-        public void OnLoad(int version, int subversion, int buildversion) {
-        }
-
-        /// <summary>
-        /// Called once the plugin is enabled.
-        /// Meaning the start methods will be
-        /// called when needed.
-        /// </summary>
-        public void OnEnabled() {
-
+        public override PluginResponse OnEnable(IBotSettings botSettings) {
+            if (!botSettings.loadWorld) return new PluginResponse(false, "'Load world' must be enabled.");
+            if(string.IsNullOrWhiteSpace(Setting[0].Get<string>()) ||
+               string.IsNullOrWhiteSpace(Setting[1].Get<string>())  ) return new PluginResponse(false, "No coordinates have been entered.");
+            if (!Setting[0].Get<string>().Contains(' ') || !Setting[1].Get<string>().Contains(' ')) return new PluginResponse(false, "Invalid coordinates (does not contain ' ').");
             var startSplit = Setting[0].Get<string>().Split(' ');
             var endSplit = Setting[1].Get<string>().Split(' ');
-            if (startSplit.Length != 3 || endSplit.Length != 3) {
-                Console.WriteLine("[AreaMiner] Invalid coordinates (must be x y z).");
-                return;
-            }
-            Shares = new ShareManager(new IRadius(new Location(int.Parse(startSplit[0]), int.Parse(startSplit[1]), int.Parse(startSplit[2])),
-                                                  new Location(int.Parse(endSplit[0]), int.Parse(endSplit[1]), int.Parse(endSplit[2]))));
+            if (startSplit.Length != 3 || endSplit.Length != 3) return new PluginResponse(false, "Invalid coordinates (must be x y z).");
 
-            if (Setting[5].Get<int>() == 0) {
-                PathOptions.Mine = true;
-                ZoneReachOptions.Mine = true;
-            }
-            else {
-                PathOptions.Mine = false;
-                ZoneReachOptions.Mine = false;
-            }
-
+            return new PluginResponse(true);
         }
+        public override void OnDisable() { shares?.Clear(); }
 
-        /// <summary>
-        /// Called once the plugin is disabled.
-        /// Meaning the start methods will not be
-        /// called.
-        /// </summary>
-        public void OnDisabled() {
-            beingMined.Clear();
-            broken.Clear();
-        }
-
-        /// <summary>
-        /// The plugin should be stopped.
-        /// </summary>
-        public void Stop() {
-            stopToken.Stop();
-        }
-        private CancelToken stopToken = new CancelToken();
-
-        /// <summary>
-        /// Return an instance of this plugin.
-        /// </summary>
-        /// <returns></returns>
-        public IPlugin Copy() {
-            return (IStartPlugin)MemberwiseClone();
-        }
-
-        /// <summary>
-        /// Called once a "player" logs
-        /// in to the server.
-        /// (This does not start a new thread, so
-        /// if you want to do any long temn functions
-        /// please start your own thread!)
-        /// </summary>
-        /// <param name="player"></param>
-        /// <returns></returns>
-        public PluginResponse OnStart(IPlayer player) {
-
-            // Avoid starting the bot without having it enabled
-            // in the plugins tab.
-            if (Shares == null) {
-                Console.WriteLine("[AreaMiner] Can't start the plugin from the 'Accounts' tab.");
-                return new PluginResponse(false, "Can't start the plugin from the 'Accounts' tab.");
-            }
-            stopToken.Reset();
-
-            //Check if bot settings are valid.
-            if (!player.settings.loadWorld) {
-                Console.WriteLine("[AreaMiner] 'Load world' must be enabled.");
-                return new PluginResponse(false, "'Load world' must be enabled.");
-            }
-            //Check if settings are valid.
-            if (string.IsNullOrWhiteSpace(Setting[0].Get<string>()) ||
-                string.IsNullOrWhiteSpace(Setting[1].Get<string>())) {
-                Console.WriteLine("[AreaMiner] No coordinates have been entered.");
-                return new PluginResponse(false, "No coordinates have been entered.");
-            }
-            if (!Setting[0].Get<string>().Contains(' ') || !Setting[1].Get<string>().Contains(' ')) {
-                Console.WriteLine("[AreaMiner] Invalid coordinates (does not contain ' ').");
-                return new PluginResponse(false, "Invalid coordinates (does not contain ' ').");
-            }
-            var startSplit = Setting[0].Get<string>().Split(' ');
-            var endSplit = Setting[1].Get<string>().Split(' ');
-            if (startSplit.Length != 3 || endSplit.Length != 3) {
-                Console.WriteLine("[AreaMiner] Invalid coordinates (must be x y z).");
-                return new PluginResponse(false, "Invalid coordinates (must be x y z).");
-            }
-
-            //Set the player.
-            this.player = player;
-
-            //If there are no zone assinged,
-            //generate one.
-            Shares.Add(player);
+        public override void OnStart() {
 
             // Split the ids.
             var ids = Setting[4].Get<string>().Split(' ');
-            List<int> ignoreIdList = new List<int>();
-            for (int i = 0; i < ids.Length; i++) {
-                int id;
-                if (!int.TryParse(ids[i], out id))
+            List<ushort> ignoreIdList = new List<ushort>();
+            for (int i = 0; i < ids.Length; i++)
+            {
+                ushort id;
+                if (!ushort.TryParse(ids[i], out id))
                     continue;
                 ignoreIdList.Add(id);
             }
-            this.ignoreIds = ignoreIdList.ToArray();
 
-            //Hook start events.
-            player.physicsEngine.onPhysicsPreTick += PhysicsEngine_onPhysicsPreTick;
-            player.events.onDisconnected += Events_onDisconnected;
-            player.events.onBlockChanged += Events_onBlockChanged;
-            return new PluginResponse(true);
+            var startSplit = Setting[0].Get<string>().Split(' ');
+            var endSplit = Setting[1].Get<string>().Split(' ');
+
+            var macro = new MacroSync();
+
+            RegisterTask(new InventoryMonitor(Setting[2].Get<string>(), macro));
+            RegisterTask(new Path(shares,
+                                  new Location(int.Parse(startSplit[0]), int.Parse(startSplit[1]), int.Parse(startSplit[2])),
+                                  new Location(int.Parse(endSplit[0]), int.Parse(endSplit[1]), int.Parse(endSplit[2])),
+                                  (PathMode) Setting[5].Get<int>(), macro
+                                 ));
+            RegisterTask(new Mine(shares, (Mode)Setting[3].Get<int>(), (PathMode)Setting[5].Get<int>(), ignoreIdList.ToArray(), macro));
         }
-
-        private void Events_onBlockChanged(IPlayer player, ILocation location, ushort oldId, ushort newId)
-        {
-            if (this.target != null && location.Compare(this.target) && oldId != newId) {
-                //Insta completed:
-                //Reset states.
-                this.mining = false;
-                this.equiped = false;
-                this.target = null;
-
-                // Cancel dig.
-                this.digAction?.Cancel(player);
-            }
-        }
-
-        private void PhysicsEngine_onPhysicsPreTick(IPlayer player) {
-            
-            //Check if we should stop the plugin.
-            if (stopToken.stopped) {
-                player.physicsEngine.onPhysicsPreTick -= PhysicsEngine_onPhysicsPreTick;
-                if (target != null) {
-                    object val;
-                    beingMined.TryRemove(target, out val);
-                }
-                return;
-            }
-
-            //Check if we are not busy at the moment.
-            if (player.status.entity.isDead || player.status.eating
-                || moving || mining || IsMacroRunning())
-                return;
-
-            // Before starting to mine check if
-            // every bot has reached their spot,
-            // so that they wouldn't get stuck.
-            if (MoveCenterWait())
-                return;
-
-
-            //Check if we are full.
-            if (Setting[2].value != null && !string.IsNullOrWhiteSpace(Setting[2].Get<string>()) &&
-                player.status.containers.inventory.hotbar.FindFreeSlot() == -1 &&
-                player.status.containers.inventory.inner.FindFreeSlot() == -1)
-            {
-                //Inventory is full, do full events.
-                macroTask = player.functions.StartMacro(Setting[2].Get<string>());
-                return;
-            }
-
-            //Handle tick skipping:
-            //Check if this tick should be skipped.
-            if (skipTick) {
-                skipTick = false;
-                return;
-            }
-            ticks++;
-            if (ticks < (Setting[3].Get<int>() == 0?5:1)) return;
-            ticks = 0;
-
-            //Check if we should mine something.
-            if (this.target != null) {
-
-                // Check if this is safe to mine, now that
-                // we have moved to this position.
-                // (Might be that we moved on top of this block
-                // and it is no longer safe to mine because
-                // we would fall into it)
-                if (!IsSafe(this.target)) {
-                    // Do not move to this block again.
-                    broken.TryAdd(this.target, DateTime.Now);
-
-                    //Reset states.
-                    this.mining = false;
-                    this.equiped = false;
-                    this.target = null;
-                    return;
-                }
-
-                //We have reached the position we wanted,
-                //but the target is still valid, meaning
-                //we should still mine it.
-                if (!equiped) {
-                    //This tick we are equiping a tool,
-                    //so on the next tick start mining.
-                    player.functions.SelectBestTool(target);
-                    this.equiped = true;
-
-                    //We should use the same tick to set up
-                    //the look as well, as it will be processed
-                    //at the same time on the server.
-                    player.functions.LookAtBlock(this.target);
-
-                    this.skipTick = true;
-                    return;
-                }
-
-                //Update the mining state.
-                //Attempt to mine the target.
-                MineTarget();
-                return;
-            }
-
-            //Get the next target.
-            this.target = this.FindNext();
-            if (this.target == null)   return;
-
-            //Attempt to move to the target.
-            //Update moving state.
-            this.moving = true;
-            
-            ThreadPool.QueueUserWorkItem(state => 
-            {
-                //Create the map and hook all the
-                //callbacks.
-                var success = player.functions.WaitMoveToRange(target, stopToken, PathOptions);
-                if (!success && this.target != null) {
-                    broken.TryAdd(this.target, DateTime.Now);
-                    this.target = null;
-                }
-
-                this.moving = false;
-            });
-        }
-
-        // Attempts to move to the bot's zone and
-        // waits for all other bots to reach it.
-        private bool MoveCenterWait() {
-
-            if(!_zoneReached)
-                if (this.moving)
-                    return true;
-                else {
-                    // Check if we need to move to our spot.
-                    var zone = Shares.Get(this.player);
-                    if (zone == null) return true;
-                    ILocation center = zone.GetClosestWalkable(player.world, player.status.entity.location.ToLocation(), true);
-
-                    var map = player.functions.AsyncMoveToLocation(center, stopToken, ZoneReachOptions);
-                    map.Completed += areaMap => {
-                        Shares.RegisterReach(this.player);
-                        this._zoneReached = true;
-                        this.moving = false;
-                    };
-                    map.Cancelled += (areaMap, cuboid) => {
-                        this._zoneReached = false;
-                        this.moving = false;
-                    };
-
-                    //Start moving.
-                    this.moving = true;
-                    map.Start();
-                }
-
-            // We have reached our target, check
-            //if we need to wait for others.
-            if (!Shares.AllReached())
-                return true;
-            return false;  // Everybody is done, start mining.
-        }
-        private bool _zoneReached = false;
-
-        private void Events_onDisconnected(IPlayer player, string reason) {
-
-            //Remove the mine restriction.
-            if (target != null) {
-                object obj;
-                beingMined.TryRemove(target, out obj);
-            }
-        }
-
-        /// <summary>
-        /// Attempts to mine a block at
-        /// the target location.
-        /// </summary>
-        private void MineTarget() {
-            //Update the mining state.
-            this.mining = true;
-
-            if (this.target != null) {
-
-                // Add to block list as we already mined it.
-                if(Setting[5].Get<int>() == 0) // Only do this on 'Advanced' mode.
-                    broken.TryAdd(this.target, DateTime.Now);
-
-                //Attempt to mine the target.
-                digAction = player.functions.BlockDig(this.target, MiningResult);
-            }
-
-            //Check for insta cancelled.
-            if (digAction.cancelled || !digAction.valid) {
-                //Insta completed:
-                //Reset states.
-                this.mining = false;
-                this.equiped = false;
-                this.target = null;
-            }
-        }
-        /// <summary>
-        /// Called once block digging process
-        /// is done.
-        /// </summary>
-        /// <param name="digAction"></param>
-        private void MiningResult(IDigAction digAction) {
-            
-            //Check if we completed mining the block.
-            if (digAction.cancelled || digAction.completed || !digAction.valid) {
-
-                //Reset states.
-                this.digAction = null;
-                this.mining = false;
-                this.equiped = false;
-                this.target = null;
-            }
-        }
-
-        /// <summary>
-        /// Find the next block we should mine.
-        /// </summary>
-        /// <returns></returns>
-        private ILocation FindNext() {
-
-            //Get the area from the radius.
-            IRadius playerRadius = Shares.Get(player);
-            if (playerRadius == null) return null;
-
-            //Search from top to bottom.
-            //(As that is easier to manager)
-            ILocation closest = null;
-            double distance = int.MaxValue;
-            for (int y = (int)playerRadius.start.y + playerRadius.height; y >= (int)playerRadius.start.y; y--)
-                if(closest == null)
-                    for (int x = playerRadius.start.x; x <= playerRadius.start.x + playerRadius.xSize; x++)
-                        for (int z = playerRadius.start.z; z <= playerRadius.start.z + playerRadius.zSize; z++) {
-
-                            var tempLocation = new Location(x, y, z);
-                            //Check if the block is valid for mining.
-                            if (beingMined.ContainsKey(tempLocation) || player.world.GetBlockId(x, y, z) == 0)
-                                continue;
-                            if (broken.ContainsKey(tempLocation) &&
-                                broken[tempLocation].Subtract(DateTime.Now).TotalSeconds < -15)
-                                continue;
-                            if(ignoreIds?.Contains(player.world.GetBlockId(x, y, z)) == true)
-                                continue;
-
-                            // Check if this block is safe to mine.
-                            if(!IsSafe(tempLocation)) continue;
-
-                            if (closest == null) {
-                                distance = tempLocation.Distance(player.status.entity.location.ToLocation(0));
-                                closest = new Location(x, y, z);
-                            }
-                            else if (tempLocation.Distance(player.status.entity.location.ToLocation(0)) < distance) {
-                                distance = tempLocation.Distance(player.status.entity.location.ToLocation(0));
-                                closest = tempLocation;
-                            }
-                        }
-
-            return closest;
-        }
-
-        private bool IsSafe(ILocation location) {
-
-            // Check if it's safe to mine.
-            if (player.world.IsStandingOn(location, player.status.entity.location)) {
-                if (!BlocksGlobal.blockHolder.IsSafeToMine(player.world, location, true))
-                    return false;
-            }
-            else if (!BlocksGlobal.blockHolder.IsSafeToMine(player.world, location, false))
-                return false;
-
-            return true;
-        }
-
-        private bool IsMacroRunning() {
-            //Check if there is an instance of the task.
-            if (macroTask == null) return false;
-            //Check completion state.
-            return !macroTask.IsCompleted && !macroTask.IsCanceled && !macroTask.IsFaulted;
-        }
-
-        // These classes allow the bots
-        // to share work.
-        // (E.g.: mining different blocks.)
-        #region Shared work.
-
-        /// <summary>
-        /// Blocks that are taken already.
-        /// </summary>
-        public static ConcurrentDictionary<ILocation, object> beingMined = new ConcurrentDictionary<ILocation, object>();
-
-        /// <summary>
-        /// Blocks that are having a hard time being mined.
-        /// </summary>
-        public static ConcurrentDictionary<ILocation, DateTime> broken = new ConcurrentDictionary<ILocation, DateTime>(); 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public static ShareManager Shares;
-
-        #endregion
     }
 }
 
-
 public class ShareManager
 {
-    private ConcurrentDictionary<IPlayer, IRadius> _Zones = new ConcurrentDictionary<IPlayer, IRadius>();
-    private ConcurrentDictionary<IPlayer, bool> _Reached = new ConcurrentDictionary<IPlayer, bool>();
-    private readonly IRadius _Total;
+    private readonly ConcurrentDictionary<IPlayer, SharedRadiusState> zones = new ConcurrentDictionary<IPlayer, SharedRadiusState>();
+    private IRadius  radius;
 
-    private bool _Processing;
-    private bool _Reprocess;
-
-    public ShareManager(IRadius total) {
-
-        // Apply the total area that needs
-        // to be mined.
-        this._Total = total;
+    public void SetArea(IRadius radius) {
+        this.radius = radius;
     }
-
-    private bool _reached = false;
-    public void RegisterReach(IPlayer player) {
-
-        _Reached[player] = true;
-        if (_Reached.All(x => x.Value)) _reached = true;
-        else _reached = false;
+    public void Add(IPlayer player, IRadius radius) {
+        zones.TryAdd(player, new SharedRadiusState(radius));
+        Calculate();
     }
-    public bool AllReached() {
-        return _reached;
-    }
-
-    public void Add(IPlayer player) {
-
-        // Add a new player to the zone array.
-        _Zones.TryAdd(player, new IRadius(_Total.start, new Location(_Total.start.x + _Total.xSize, _Total.start.y + _Total.height, _Total.start.z + _Total.zSize)));
-        _Reached.TryAdd(player, false);
-
-        // Update all shares, as we
-        // got another person in.
-        Update();
+    public void Clear() {
+        zones.Clear();
     }
 
     public IRadius Get(IPlayer player) {
-        if (_Zones.ContainsKey(player))
-            return _Zones[player];
-        return null;
+        SharedRadiusState state;
+        if (!zones.TryGetValue(player, out state)) return null;
+        return state.radius;
     }
 
-    private void Update() {
-
-        // Avoid processing 2 calls at the same time.
-        if (_Processing) {
-            this._Reprocess = true;
-            return;
-        }
-        this._Processing = true; // We are not processing the call.
-        bool first = true; // If this is our first time in this call
-                           // process the call, with _reprocess ignored.
-
-        // Check if while we were processing another
-        // call came in.
-        while (first || this._Reprocess) {
-            first = false;
-            this._Reprocess = false; // We are reprocessing so update the state.
-
-            // Get a zones instance.
-            var zones = _Zones.ToArray();
-            Calculate(zones);
-        }
-        this._Processing = false; // Done processing the call.
+    public void RegisterReached(IPlayer player) {
+        SharedRadiusState state;
+        if (!zones.TryGetValue(player, out state)) return;
+        state.reached = true;
     }
 
-    private void Calculate(KeyValuePair<IPlayer, IRadius>[] zones) {
+    public void Calculate() {
 
-        // Count the workers.
+        var zones = this.zones.ToArray();
         var count = zones.Length;
 
         int x, z;
         int l;
-        if (_Total.xSize > _Total.zSize) {
-            x = (int)Math.Ceiling((double)_Total.xSize/(double)count);
-            l = _Total.xSize;
-            z = _Total.zSize;
+        if (radius.xSize > radius.zSize) {
+            x = (int)Math.Ceiling((double)radius.xSize / (double)count);
+            l = radius.xSize;
+            z = radius.zSize;
             for (int i = 0; i < zones.Length; i++)
-                zones[i].Value.UpdateHorizontal(new Location(_Total.start.x + x*i, 0, _Total.start.z),
-                    new Location(_Total.start.x + (x*(i + 1)) + (i == zones.Length - 1 ? l - (x*(i+1)): 0), 0, _Total.start.z + z));
+                zones[i].Value.Update(new Location(radius.start.x + x * i, 0, radius.start.z),
+                                      new Location(radius.start.x + (x * (i + 1)) + (i == zones.Length - 1 ? l - (x * (i + 1)) : 0), 0, radius.start.z + z));
         }
         else {
-            x = _Total.xSize;
-            z = (int)Math.Ceiling((double)_Total.zSize/(double)count);
-            l = _Total.zSize;
+            x = radius.xSize;
+            z = (int)Math.Ceiling((double)radius.zSize / (double)count);
+            l = radius.zSize;
             for (int i = 0; i < zones.Length; i++)
-                zones[i].Value.UpdateHorizontal(new Location(_Total.start.x, 0, _Total.start.z + z*i),
-                    new Location(_Total.start.x + x, 0, _Total.start.z + z*(i + 1) + (i==zones.Length-1? l - (z*(i+1)):0)));
+                zones[i].Value.Update(new Location(radius.start.x, 0, radius.start.z + z * i),
+                                      new Location(radius.start.x + x, 0, radius.start.z + z * (i + 1) + (i == zones.Length - 1 ? l - (z * (i + 1)) : 0)));
         }
+    }
+
+    public bool AllReached() {
+
+        var temp= zones.ToArray();
+        for(int i = 0; i < temp.Length; i++)
+            if (!temp[i].Value.reached) return false;
+        return true;
+    }
+    public bool MeReached(IPlayer player) {
+
+        SharedRadiusState state;
+        if (!zones.TryGetValue(player, out state)) return false;
+        return state.reached;
+    }
+}
+
+public class SharedRadiusState
+{
+    public bool    reached = false;
+    public IRadius radius  = null;
+
+    public SharedRadiusState(IRadius radius) {
+        this.radius = radius;
+    }
+
+    public void Update(ILocation loc, ILocation loc2) {
+        reached = false;
+        radius.UpdateHorizontal(loc, loc2);
+    }
+}
+
+public class MacroSync
+{
+    private Task macroTask;
+
+    public bool IsMacroRunning() {
+        //Check if there is an instance of the task.
+        if (macroTask == null) return false;
+        //Check completion state.
+        return !macroTask.IsCompleted && !macroTask.IsCanceled && !macroTask.IsFaulted;
+    }
+
+    public void Run(IPlayer player, string name) {
+        macroTask = player.functions.StartMacro(name);
     }
 }
