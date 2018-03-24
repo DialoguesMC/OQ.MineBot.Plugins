@@ -6,7 +6,7 @@ using OQ.MineBot.PluginBase.Classes.Objects.List;
 
 namespace AutoFishPlugin.Tasks
 {
-    public class Fish : ITask, ITickListener, IStartListener
+    public class Fish : ITask, ITickListener
     {
         private static readonly double[] MOTION_Y_TRESHOLD = {
             -0.02,
