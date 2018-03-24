@@ -6,7 +6,7 @@ using OQ.MineBot.PluginBase.Classes;
 
 namespace SugarcaneFarmerPlugin.Tasks
 {
-    public class Farm : ITask, ITickListener, IStartListener
+    public class Farm : ITask, ITickListener
     {
         private const int SUGARCANE     = 83;
         private readonly MapOptions MO  = new MapOptions() { Look = false, Quality = SearchQuality.LOW, AntiStuck = false };
@@ -24,6 +24,7 @@ namespace SugarcaneFarmerPlugin.Tasks
             this.z = z;
             this.mode = mode;
             this.scan = true;
+            this.personalBlocks.Clear();
         }
 
         public void OnStart() {
@@ -63,12 +64,12 @@ namespace SugarcaneFarmerPlugin.Tasks
                     Mine(location.Offset(1));
                 };
                 map.Cancelled += (areaMap, cuboid) => {
+                    object obj; beingMined.TryRemove(location, out obj);
+                    busy = false;
                     personalBlocks.AddOrUpdate(location, new BlockTimer(), (location1, timer) => {
                         timer.Block();
-                        busy = false;
                         return timer;
                     });
-                    object obj; beingMined.TryRemove(location, out obj);
                 };
                 map.Start();
             }

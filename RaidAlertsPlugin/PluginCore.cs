@@ -24,7 +24,7 @@ namespace RaidAlertsPlugin
     public class PluginCore : IStartPlugin
     {
         public override void OnLoad(int version, int subversion, int buildversion) {
-            this.Setting = new IPluginSetting[10];
+            this.Setting = new IPluginSetting[11];
             Setting[0] = new StringSetting("User or Channel ID", "Enable developer mode: Settings->Appearance->Developer mode. Copy id: right click channel and click 'Copy ID'.", "");
             Setting[1] = new BoolSetting("Local notifications", "", true);
             Setting[2] = new BoolSetting("Explosion notifications", "", true);
@@ -34,7 +34,8 @@ namespace RaidAlertsPlugin
             Setting[6] = new StringSetting("Friendly uuid(s)/name(s)", "Uuids/name(s) split by space.", "");
             Setting[7] = new StringSetting("Lamp coordinates", "Coordinates in the [X Y Z] format, split by a space", "[-1 -1 -1] [0 0 0] [1 1 1]");
             Setting[8] = new ComboSetting("Mode", "Notification mode", new []{"none", "@everyone", "@everyone + tts"}, 1);
-            Setting[9] = new LinkSetting("Add bot", "Adds the bot to your discord channel (you must have administrator permissions).", "https://discordapp.com/oauth2/authorize?client_id=299708378236583939&scope=bot&permissions=6152");   
+            Setting[9] = new LinkSetting("Add bot", "Adds the bot to your discord channel (you must have administrator permissions).", "https://discordapp.com/oauth2/authorize?client_id=299708378236583939&scope=bot&permissions=6152");
+            Setting[10] = new BoolSetting("Detect falling blocks", "Should the bot detected falling sand and falling tnt", true);
         }
 
         public override PluginResponse OnEnable(IBotSettings botSettings) {
@@ -79,7 +80,7 @@ namespace RaidAlertsPlugin
             RegisterTask(new Alerts(
                             ulong.Parse(Setting[0].Get<string>()),
                             Setting[1].Get<bool>(), Setting[2].Get<bool>(), Setting[3].Get<bool>(), Setting[4].Get<bool>(), Setting[5].Get<bool>(),
-                            Setting[6].Get<string>(), lampLocations.ToArray(), (DiscordHelper.Mode)Setting[8].Get<int>()
+                            Setting[6].Get<string>(), lampLocations.ToArray(), (DiscordHelper.Mode)Setting[8].Get<int>(), Setting[10].Get<bool>()
                         ));
         }
     }

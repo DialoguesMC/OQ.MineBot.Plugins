@@ -73,6 +73,8 @@ namespace ShieldPlugin.Tasks
 
         private ILiving GetClosestFollowTarget() {
             ILiving moveTarget = ownerEntity;
+            if (ownerEntity == null) return null;
+
             ILiving enemy = player.entities.FindClosestTarget(status.entity.location.ToLocation(), Targeter.DefaultFilter);
             if (enemy != null && mode == Mode.Aggresive && enemy.location.Distance(ownerEntity.location) < 5) moveTarget = enemy;
             else if (ownerEntity.location.Distance(status.entity.location) < 1) return null;

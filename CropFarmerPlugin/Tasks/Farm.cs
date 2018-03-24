@@ -6,7 +6,7 @@ using OQ.MineBot.PluginBase.Classes;
 
 namespace CropFarmerPlugin.Tasks
 {
-    public class Farm : ITask, ITickListener, IStartListener
+    public class Farm : ITask, ITickListener
     {
         private readonly MapOptions MO        = new MapOptions() { Look = false, Quality = SearchQuality.LOW };
         private static ushort[]     FARMABLE  = { 59, 141, 142, 207 };

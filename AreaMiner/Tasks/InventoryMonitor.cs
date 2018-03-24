@@ -2,7 +2,7 @@
 
 namespace AreaMiner.Tasks
 {
-    public class InventoryMonitor : ITask, ITickListener
+    public class InventoryMonitor : ITask, ITickListener, IDeathListener
     {
         private readonly MacroSync macro;
         private readonly string    macroName;
@@ -18,6 +18,10 @@ namespace AreaMiner.Tasks
 
         public void OnTick() {
             macro.Run(player, macroName);
+        }
+
+        public void OnDeath() {
+            throw new System.NotImplementedException();
         }
     }
 }

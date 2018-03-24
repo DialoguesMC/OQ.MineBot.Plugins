@@ -18,6 +18,15 @@ namespace ChatSpyPlugin
         private IPlayer player;
         public ChatForm(string name, IPlayer player) {
             InitializeComponent();
+
+            this.AcceptButton = Chat_Send;
+            this.KeyDown += (sender, args) => {
+                args.SuppressKeyPress = true; // Disable sound.
+            };
+            Chat_Box.KeyDown += (sender, args) => {
+                args.SuppressKeyPress = true; // Disable sound.
+            };
+
             this.player = player;
 
             player.events.onChat += OnChatMessage;
@@ -31,7 +40,7 @@ namespace ChatSpyPlugin
                         });
                 };
 
-            this.Text = name + " chat";
+            this.Text = name + "'s chat";
         }
 
         private void OnChatMessage(IPlayer player, IChat message, byte position) {

@@ -5,7 +5,7 @@ using OQ.MineBot.PluginBase.Base.Plugin.Tasks;
 
 namespace OreCounterPlugin.Tasks
 {
-    public class FormOpener : ITask, IStartListener
+    public class FormOpener : ITask
     {
         public override bool Exec() { return true; }
 

@@ -9,6 +9,8 @@ using OQ.MineBot.PluginBase.Classes;
 using OQ.MineBot.PluginBase.Classes.Entity;
 using OQ.MineBot.PluginBase.Classes.Entity.Mob;
 using OQ.MineBot.PluginBase.Classes.Entity.Player;
+using OQ.MineBot.PluginBase.Classes.Objects;
+using OQ.MineBot.PluginBase.Classes.Objects.List;
 using OQ.MineBot.PluginBase.Classes.Physics;
 using OQ.MineBot.PluginBase.Utility;
 using OQ.MineBot.Protocols.Classes.Base;
@@ -29,8 +31,9 @@ namespace RaidAlertsPlugin.Tasks
         private readonly string             friendly;
         private readonly ILocation[]        lamps;
         private readonly DiscordHelper.Mode mode;
+        private readonly bool               falling;
         
-        public Alerts(ulong discord, bool local, bool explosion, bool wither, bool creeper, bool players, string friendly, ILocation[] lamps, DiscordHelper.Mode mode) {
+        public Alerts(ulong discord, bool local, bool explosion, bool wither, bool creeper, bool players, string friendly, ILocation[] lamps, DiscordHelper.Mode mode, bool falling) {
             this.discord   = discord;
             this.local     = local;
             this.explosion = explosion;
@@ -40,6 +43,7 @@ namespace RaidAlertsPlugin.Tasks
             this.friendly  = friendly;
             this.lamps     = lamps;
             this.mode      = mode;
+            this.falling   = falling;
         }
 
         public override bool Exec() { return true; }
@@ -47,11 +51,30 @@ namespace RaidAlertsPlugin.Tasks
             player.events.onExplosion     += OnExplosion;
             player.entities.onEntityAdded += OnEntityAdded;
             player.events.onBlockChanged  += OnBlockChanged;
+            player.events.onDeath         += OnDeath;
+            player.events.onObjectSpawned += OnObjectSpawned;
         }
+
         public override void Stop() {
             player.events.onExplosion     -= OnExplosion;
             player.entities.onEntityAdded -= OnEntityAdded;
             player.events.onBlockChanged  -= OnBlockChanged;
+            player.events.onDeath         -= OnDeath;
+            player.events.onObjectSpawned -= OnObjectSpawned;
+        }
+
+        private void OnObjectSpawned(IWorldObject worldObject, double d, double d1, double d2, byte pitch, byte yaw) {
+            if (!falling) return;
+
+            var fallingOjbect = worldObject as FallingBlockObject;
+            if (fallingOjbect != null) {
+                if (fallingOjbect.BlockType == 12) NotifyUser(ApplyVariables("Falling sand block detected.", player.status.entity.location.ToLocation(0), new Location((int)d, (float)d1, (int)d2), "Sand"), 6, 6);
+                else if (fallingOjbect.BlockType == 46) NotifyUser(ApplyVariables("Falling TNT block detected.", player.status.entity.location.ToLocation(0), new Location((int)d, (float)d1, (int)d2), "TNT"), 7, 7);
+            }
+        }
+
+        private void OnDeath(IPlayer player) {
+            NotifyUser(ApplyVariables("Bot has died.", player.status.entity.location.ToLocation(0), null, ""), 10, 5);
         }
 
         private void OnBlockChanged(IPlayer player, ILocation location, ushort oldId, ushort newId)  {
@@ -87,10 +110,9 @@ namespace RaidAlertsPlugin.Tasks
                         NotifyUser(ApplyVariables("A player has been detected.", player.status.entity.location.ToLocation(0), playerEntity.location.ToLocation(0), name.Name), 4, 3);
                 }
             }
-            else {
+            else if(entity is IMobEntity) {
                 var mobEntity = entity as IMobEntity;
-                if (mobEntity == null) return;
-
+                
                 if(mobEntity.type == MobType.Wither && wither)
                     NotifyUser(ApplyVariables("A wither has been detected.", player.status.entity.location.ToLocation(0), mobEntity.location.ToLocation(0), "Wither"), 10, 2);
                 else if(mobEntity.type == MobType.Creeper && creeper)

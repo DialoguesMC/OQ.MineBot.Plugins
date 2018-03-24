@@ -11,6 +11,7 @@ using OQ.MineBot.PluginBase.Bot;
 using OQ.MineBot.PluginBase.Classes;
 using OQ.MineBot.PluginBase.Classes.Base;
 using OQ.MineBot.PluginBase.Classes.Entity;
+using OQ.MineBot.PluginBase.Utility;
 using TextSpammerPlugin.Tasks;
 
 namespace TextSpammerPlugin
@@ -18,6 +19,8 @@ namespace TextSpammerPlugin
     [Plugin(1, "Text file spammer", "Spams messages from a text file.")]
     public class PluginCore : IStartPlugin
     {
+        private string[] messages;
+
         public override void OnLoad(int version, int subversion, int buildversion) {
             this.Setting = new IPluginSetting[5];
             Setting[0] = new PathSetting("Text file path", "Picks lines from the selected file to spam.", "");
@@ -29,14 +32,16 @@ namespace TextSpammerPlugin
 
         public override PluginResponse OnEnable(IBotSettings botSettings) {
             if (string.IsNullOrWhiteSpace(Setting[0].Get<string>()) || !File.Exists(Setting[0].Get<string>())) return new PluginResponse(false, "Invalid text file selected.");
-            string[] messages = File.ReadAllLines(Setting[0].Get<string>());
+            messages = File.ReadAllLines(Setting[0].Get<string>());
             if (messages.Length == 0) return new PluginResponse(false, "Invalid text file selected.");
+            return new PluginResponse(true);
+        }
 
+        public override void OnStart() {
             RegisterTask(new Spam(
-                                messages, Setting[1].Get<int>(), Setting[2].Get<int>(), 
+                                messages, Setting[1].Get<int>(), Setting[2].Get<int>(),
                                 Setting[3].Get<bool>(), !Setting[4].Get<bool>()
                         ));
-            return new PluginResponse(true);
         }
     }
 }

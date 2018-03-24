@@ -32,8 +32,11 @@
             // 
             // Chat_Message
             // 
+            this.Chat_Message.AcceptsReturn = true;
+            this.Chat_Message.AcceptsTab = true;
             this.Chat_Message.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.Chat_Message.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.Chat_Message.Location = new System.Drawing.Point(12, 349);
             this.Chat_Message.MaxLength = 256;
             this.Chat_Message.Name = "Chat_Message";
@@ -44,12 +47,13 @@
             // Chat_Send
             // 
             this.Chat_Send.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.Chat_Send.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.Chat_Send.Location = new System.Drawing.Point(477, 348);
             this.Chat_Send.Name = "Chat_Send";
             this.Chat_Send.Size = new System.Drawing.Size(75, 22);
             this.Chat_Send.TabIndex = 2;
             this.Chat_Send.Text = "Send";
-            this.Chat_Send.UseVisualStyleBackColor = true;
+            this.Chat_Send.UseVisualStyleBackColor = false;
             this.Chat_Send.Click += new System.EventHandler(this.Chat_Send_Click);
             // 
             // Chat_Box
@@ -57,6 +61,9 @@
             this.Chat_Box.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.Chat_Box.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.Chat_Box.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.Chat_Box.HideSelection = false;
             this.Chat_Box.Location = new System.Drawing.Point(12, 12);
             this.Chat_Box.Name = "Chat_Box";
             this.Chat_Box.ReadOnly = true;
@@ -73,6 +80,7 @@
             this.Controls.Add(this.Chat_Send);
             this.Controls.Add(this.Chat_Message);
             this.Name = "ChatForm";
+            this.ShowIcon = false;
             this.ResumeLayout(false);
             this.PerformLayout();
 
