@@ -54,7 +54,7 @@
             this.SelectedContainer.FormattingEnabled = true;
             this.SelectedContainer.Location = new System.Drawing.Point(0, 0);
             this.SelectedContainer.Name = "SelectedContainer";
-            this.SelectedContainer.Size = new System.Drawing.Size(884, 21);
+            this.SelectedContainer.Size = new System.Drawing.Size(624, 21);
             this.SelectedContainer.TabIndex = 0;
             this.SelectedContainer.SelectedIndexChanged += new System.EventHandler(this.SelectedContainerChanged);
             // 
@@ -67,7 +67,7 @@
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.DropSlot);
             this.groupBox1.Controls.Add(this.ClickSlot);
-            this.groupBox1.Location = new System.Drawing.Point(701, 27);
+            this.groupBox1.Location = new System.Drawing.Point(441, 27);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(171, 76);
             this.groupBox1.TabIndex = 1;
@@ -136,7 +136,7 @@
             // 
             this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox2.Controls.Add(this.CloseWindow);
-            this.groupBox2.Location = new System.Drawing.Point(701, 109);
+            this.groupBox2.Location = new System.Drawing.Point(441, 109);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Size = new System.Drawing.Size(171, 52);
             this.groupBox2.TabIndex = 2;
@@ -158,7 +158,7 @@
             this.HotbarGroup.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.HotbarGroup.Controls.Add(this.HotbarRightclick);
             this.HotbarGroup.Controls.Add(this.HotbarSelect);
-            this.HotbarGroup.Location = new System.Drawing.Point(701, 167);
+            this.HotbarGroup.Location = new System.Drawing.Point(441, 167);
             this.HotbarGroup.Name = "HotbarGroup";
             this.HotbarGroup.Size = new System.Drawing.Size(171, 52);
             this.HotbarGroup.TabIndex = 3;
@@ -190,7 +190,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(884, 861);
+            this.ClientSize = new System.Drawing.Size(624, 861);
             this.Controls.Add(this.HotbarGroup);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);

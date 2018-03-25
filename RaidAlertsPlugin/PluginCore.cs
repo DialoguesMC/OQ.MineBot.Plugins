@@ -50,6 +50,11 @@ namespace RaidAlertsPlugin
             catch (Exception ex) {
                 return new PluginResponse(false, "Could not parse discord id.");
             }
+
+            // Do warnings.
+            if(string.IsNullOrWhiteSpace(Setting[7].Get<string>()) && (!botSettings.loadWorld ||botSettings.staticWorlds)) DiscordHelper.Error("[RaidAlerts] 'Load worlds' should be enabled, 'Shared worlds' should be disabled.", 584);
+            if (Setting[10].Get<bool>() && (!botSettings.loadEntities || !botSettings.loadMobs)) DiscordHelper.Error("[RaidAlerts] 'Load entities' & 'Load mobs' should be enabled.", 585);
+
             return new PluginResponse(true);
         }
 

@@ -102,7 +102,7 @@ namespace ContainerViewerPlugin
             // Select inventory by default.
             this.SelectedContainer.Items.Add(player.status.containers.inventory);
             Select(player.status.containers.inventory);
-            player.status.containers.inventory.onSlotChanged += SelectedWinowOnOnSlotChanged;
+            player.events.onInventoryChanged += (player1, changed, removed, id, difference, slot) => DrawGroups();
         }
 
         public void Select(IWindow window) {
@@ -111,16 +111,9 @@ namespace ContainerViewerPlugin
             hotbar?.Dispose();
             yoff = 0;
             HotbarGroup.Visible = false;
-
-            if (this.selectedWinow!=null && this.selectedWinow != player.status.containers.inventory) this.selectedWinow.onSlotChanged -= SelectedWinowOnOnSlotChanged;
-            this.selectedWinow = window;
-            if(this.selectedWinow != player.status.containers.inventory) this.selectedWinow.onSlotChanged += SelectedWinowOnOnSlotChanged;
+            selectedWinow = window;
 
             Draw();
-        }
-
-        private void SelectedWinowOnOnSlotChanged(ISlot slot) {
-            DrawGroups();
         }
 
         private void Draw() {
@@ -170,6 +163,8 @@ namespace ContainerViewerPlugin
             for (int x = 0; x < 9; x++) {
                 hotbar.Add(CreateSlot(x * SIZE, yoff + SIZE, (byte)(9*3+9 + x)));
             }
+
+            this.Size =  new Size(this.Size.Width, yoff + SIZE*2 + 50);
         }
 
         private void DrawGroups() {
@@ -178,12 +173,23 @@ namespace ContainerViewerPlugin
             if (hotbar?.slots != null) DrawGroup(hotbar);
         }
         private void DrawGroup(SlotGroup group) {
+            if (group.slots == null) return;
+
             for (int i = 0; i < group.slots.Length; i++) {
                 var slot = group.window.GetAt(group.slots[i].index);
                 if (slot != null && slot.id != 0 && slot.id != -1) {
-                    group.slots[i].picture.Image = GetImage(slot.id, slot.damage);
-                    RegisterClickEvent(group, group.slots[i]);
+                    var image = GetImage(slot.id, slot.damage);
+                    if (group.slots[i].picture.Image != image) {
+                        group.slots[i].picture.Image = image;
+                        RegisterClickEvent(group, group.slots[i]);
+                        InvokeIfRequired(group.slots[i].picture, () => group.slots[i].picture.Redraw());
+                    }
                 }
+                else if(group.slots[i].picture.Image != null) {
+                    group.slots[i].picture.Image = null;
+                    InvokeIfRequired(group.slots[i].picture, () => group.slots[i].picture.Redraw());
+                }
+
             }
         }
 
@@ -263,7 +269,7 @@ namespace ContainerViewerPlugin
         }
 
         private void DropSlot_Click(object sender, EventArgs e) {
-            if (selectedSlot != null) selectedWinow.DropItemStackAsync(selectedSlot.index, b => { });
+            if (selectedSlot != null) selectedWinow.DropItemStackAsync(selectedSlot.index, b => { DrawGroups(); });
         }
 
         private void ClickSlot_Click(object sender, EventArgs e) {
@@ -312,8 +318,7 @@ public class TransparentControl : Control
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (_image != null)
-            {
+            if (_image != null) {
                 e.Graphics.DrawImage(_image, (Width / 2) - (_image.Width / 2), (Height / 2) - (_image.Height / 2));
             }
         }

@@ -292,12 +292,12 @@ namespace TunnelPlugin.Tasks
         private bool IsOre(ushort id, ILocation location) {
             if (!BlocksGlobal.blockHolder.IsSafeToMine(player.world, location, true)) return false;
             
-            if ((diamondOre  && id == 56) ||
+            if ((diamondOre  && id == 56)  ||
                 (emeraldOre  && id == 129) ||
-                (ironOre     && id == 15) ||
-                (goldOre     && id == 14) ||
-                (redstoneOre && (id == 73 || id == 74)) || // Active and inactive redstone.
-                (lapisOre    && id == 21) ||
+                (ironOre     && id == 15)  ||
+                (goldOre     && id == 14)  ||
+                (redstoneOre && (id == 73  || id == 74)) || // Active and inactive redstone.
+                (lapisOre    && id == 21)  ||
                 (coalOre     && id == 16))
             {
                 return true;

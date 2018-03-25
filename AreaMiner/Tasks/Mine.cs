@@ -53,7 +53,10 @@ namespace AreaMiner.Tasks
                     busy = false;
                 }
                 else {
-                    if (!IsSafe(target)) broken.TryAdd(target, DateTime.Now);
+                    if (!IsSafe(target)) {
+                        broken.TryAdd(target, DateTime.Now);
+                        busy = false;
+                    }
                     else {
 
                         actions.SelectBestTool(target);

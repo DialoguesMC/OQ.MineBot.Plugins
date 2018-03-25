@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Windows.Forms;
 using OQ.MineBot.PluginBase;
 using OQ.MineBot.PluginBase.Base.Plugin.Tasks;
@@ -9,7 +10,7 @@ namespace OreCounterPlugin.Tasks
     {
         public override bool Exec() { return true; }
 
-        public void OnStart() {
+        public override void Start() {
             RegisterPlayer();
         }
 
@@ -34,12 +35,14 @@ namespace OreCounterPlugin.Tasks
         public static void CloseForm() {
 
             if (!IsFormValid()) return;
-            _form.Close();
+            _form.Invoke(new Action(() => {
+                _form.Close();
+            }));
             _form = null;
         }
 
         public void RegisterPlayer() {
-            if (!IsFormValid()) return;
+            if (!IsFormValid()) {Console.WriteLine("Form is invalid"); return;}
             _form.AddPlayer(player);
             player.events.onDisconnected += (player1, reason) => RegisterDisconnect();
             player.events.onInventoryChanged += (player1, changed, removed, id, difference, slot) =>
